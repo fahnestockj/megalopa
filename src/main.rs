@@ -3,7 +3,7 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
-use http_server::ThreadPool;
+use web_server::ThreadPool;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -22,8 +22,11 @@ fn main() {
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let request_line = buf_reader.lines().next().unwrap().unwrap();
-    
+    println!("request_line {request_line}");
+    // string parsing in rust... uhh
+    // currently only supporting GET
     let (status_line, file_name) = if request_line == "GET / HTTP/1.1" {
+        // parse out path
         ("HTTP/1.1 200 OK", "hello.html")
     } else {
         ("HTTP/1.1 404 NOT FOUND", "404.html")
