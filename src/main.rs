@@ -1,39 +1,21 @@
-use std::{
-    fs,
-    io::{prelude::*, BufReader},
-    net::{TcpListener, TcpStream},
-};
-use web_server::ThreadPool;
+use color_eyre::eyre::{eyre, Result, WrapErr};
+use megalopa::cli::write;
+use directories::UserDirs;
+use std::path::PathBuf;
+use structopt::StructOpt;
 
-fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
-    let pool = ThreadPool::new(4);
+fn main() -> Result<> {
+    color_eyre::install()?;
+    let opt = Opt::from_args();
+    let garden_path = match opt.garden_path {
+        //if the user passed in a path, use that
+        Some(pathbuf) => Ok(pathbuf),
+        //otherwise, use the default
+        None => get_default_garden_dir().wrap_err("garden_path was not supplied"),
+    }?;
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        pool.execute(|| {
-            handle_connection(stream);
-        })
+    match opt.cmd {
+        Command::Write { title } => write(garden_path, title),
     }
-    println!("Shutting down")
-}
-
-fn handle_connection(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&mut stream);
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
-    println!("request_line {request_line}");
-    // string parsing in rust... uhh
-    // currently only supporting GET
-    let (status_line, file_name) = if request_line == "GET / HTTP/1.1" {
-        // parse out path
-        ("HTTP/1.1 200 OK", "hello.html")
-    } else {
-        ("HTTP/1.1 404 NOT FOUND", "404.html")
-    };
-
-    let contents = fs::read_to_string(file_name).unwrap();
-    let length = contents.len();
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
-    stream.write_all(response.as_bytes()).unwrap();
 }
