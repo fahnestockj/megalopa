@@ -1,21 +1,12 @@
-use color_eyre::eyre::{eyre, Result, WrapErr};
-use megalopa::cli::write;
-use directories::UserDirs;
-use std::path::PathBuf;
-use structopt::StructOpt;
+use clap::Parser;
+use megalopa::cli::{write_file, Command, Cli};
 
 
-fn main() -> Result<> {
-    color_eyre::install()?;
-    let opt = Opt::from_args();
-    let garden_path = match opt.garden_path {
-        //if the user passed in a path, use that
-        Some(pathbuf) => Ok(pathbuf),
-        //otherwise, use the default
-        None => get_default_garden_dir().wrap_err("garden_path was not supplied"),
-    }?;
+fn main() {
+    let cli = Cli::parse();
 
-    match opt.cmd {
-        Command::Write { title } => write(garden_path, title),
+
+    match cli.command {
+        Command::New { title } => write_file::write_file(title),
     }
 }
