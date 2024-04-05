@@ -1,14 +1,15 @@
 mod threads;
 use std::{
-    io::{BufReader, prelude::*},
-    net::{TcpListener, TcpStream},
     fs,
+    io::{prelude::*, BufReader},
+    net::{TcpListener, TcpStream},
 };
 
+pub fn start_dev_server(port: u16) {
+    let mut addr = "127.0.0.1:".to_owned();
+    addr.push_str(&port.to_string());
 
-/// Starts a dev server on port 7878
-pub fn start_dev_server() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener = TcpListener::bind(addr).unwrap();
     let pool = threads::ThreadPool::new(4);
 
     for stream in listener.incoming() {

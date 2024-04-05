@@ -8,4 +8,5 @@ clap = { version = "4.5.4", features = ["derive"] }
 color-eyre = "0.6.3"
 directories = "5.0.1"
 edit = "0.1.5"
+markdown = "0.3.0"
 slug = "0.1.5"

@@ -5,7 +5,6 @@ pub mod write_file;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    //We want a config file... config.yaml - then we can orient our folder structure from there
     #[command(subcommand)]
     pub command: Command,
 }
@@ -14,7 +13,12 @@ pub struct Cli {
 pub enum Command {
     /// Write something in your larva
     New {
-        #[arg(short, long)]
         title: String,
     },
+    /// Host a local web server
+    Dev {
+        #[arg(default_value_t = 3000)]
+        port: u16,
+    },
+    Build {},
 }

@@ -1,22 +1,14 @@
-use std::env;
 use std::fs;
 use std::io::Write;
 use slug;
 
+use crate::utils::get_project_cwd;
+
 const TEMPLATE: &[u8; 2] = b"# ";
 /// Creates a new md file
 pub fn write_file(title: String) {
-    let cwd = env::current_dir().expect("You have no cwd?");
-    let config_file_path = cwd.clone().join("larvae.yaml");
-    
-    // likely should do an assert here
-    match fs::read_to_string(config_file_path) {
-        Ok(_) => {},
-        Err(err) => {
-            println!("{}", err.kind()); //TODO: handle better
-            panic!("Couldn't find your config file, are you in the project's dir?")
-        }
-    };
+
+    let cwd = get_project_cwd();
     
     // slug the title
     let slug = slug::slugify(title);

@@ -1,12 +1,15 @@
 use clap::Parser;
-use megalopa::cli::{write_file, Command, Cli};
+use megalopa::cli::{Command, Cli};
+use megalopa::cli;
+use megalopa::web_server;
 
 
 fn main() {
     let cli = Cli::parse();
 
-
     match cli.command {
-        Command::New { title } => write_file::write_file(title),
+        Command::New { title } => cli::write_file::write_file(title),
+        Command::Dev { port } => web_server::start_dev_server(port),
+        Command::Build {  } => {}
     }
 }
