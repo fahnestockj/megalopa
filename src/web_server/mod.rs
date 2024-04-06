@@ -9,9 +9,12 @@ pub fn start_dev_server(port: u16) {
     let mut addr = "127.0.0.1:".to_owned();
     addr.push_str(&port.to_string());
 
-    let listener = TcpListener::bind(addr).unwrap();
+    let listener = TcpListener::bind(&addr).unwrap();
     let pool = threads::ThreadPool::new(4);
-
+    println!(
+        "\n\n\tHosting a local web server at: http://localhost:{} \n\n",
+        &port.to_string(),
+    );
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         pool.execute(|| {
