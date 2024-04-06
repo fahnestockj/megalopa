@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 pub mod write_file;
+pub mod init;
 
 /// A CLI for growing and curating a crab larva!
 #[derive(Parser)]
@@ -21,4 +22,5 @@ pub enum Command {
         port: u16,
     },
     Build {},
+    Init {},
 }

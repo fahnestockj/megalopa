@@ -12,7 +12,7 @@ pub fn build() {
             for r_file in dir_entries {
                 if let Ok(file) = r_file {
                     if file.path().extension().unwrap().eq("md") {
-
+                        parse_file_to_html_and_write_to_build(file.path());
                     }
                 
                 }
@@ -26,11 +26,12 @@ pub fn build() {
 fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
     // TODO: will be busted for nested entries when you add them laterr...
     let proj_path = file_path.parent().expect("Why did you make a project in your root dir? dumby...");
-    let md_str = fs::read_to_string(file_path).unwrap();
+    let md_str = fs::read_to_string(file_path.clone()).unwrap();
+    let html_contents = markdown::to_html(&md_str);
 
-
-    // let public_file_path = proj_path.join("public").;
-    // fs::write(public_file_path, contents)
-
-
+    let mut build_file_path = proj_path.join("build").join(proj_path.file_stem().unwrap());
+    build_file_path.set_extension("md");
+    fs::write(build_file_path, html_contents).unwrap();
 }
+
+

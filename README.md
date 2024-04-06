@@ -28,10 +28,9 @@ megalopa dev
 ```
 
 ## Project Directory Structure
-```
+```bash
 Project-Name/
-├── README.md
-├── larvae.yaml
+├── larvae.yaml # Config file
 ├── content/  # Where you write your content
 │   ├── post1.md
 │   ├── post2.md 
