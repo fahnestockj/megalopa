@@ -60,7 +60,8 @@ struct Worker {
 }
 impl Worker {
     pub fn new(id: usize, reciever: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
-        let thread = thread::spawn(move || loop {
+        let builder = thread::Builder::new().name(id.to_string());
+        let thread = builder.spawn(move || loop {
             let message = reciever.lock().unwrap().recv();
 
             match message {
@@ -73,7 +74,7 @@ impl Worker {
                     break;
                 }
             }
-        });
+        }).unwrap();
 
         Worker {
             id,
