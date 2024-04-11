@@ -7,6 +7,7 @@ edition = "2021"
 clap = { version = "4.5.4", features = ["derive"] }
 directories = "5.0.1"
 edit = "0.1.5"
+http-bytes = "0.1.0"
 httparse = "1.8.0"
 markdown = "0.3.0"
 slug = "0.1.5"
