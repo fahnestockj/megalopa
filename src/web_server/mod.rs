@@ -29,12 +29,11 @@ pub fn start_dev_server(port: u16) {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    println!("started");
     let cwd = get_project_cwd().clone();
 
-    let mut buf_reader = BufReader::new(&mut stream);
-    let mut req_buf: Vec<u8> = Vec::new();
-    buf_reader.read_to_end(&mut req_buf).unwrap();
+    let buf_reader = BufReader::new(&mut stream);
+    let mut req_buf = Vec::new();
+    buf_reader.take(300).read_to_end(&mut req_buf).unwrap();
     let mut headers = [httparse::EMPTY_HEADER; 8000]; // 8k? is this a good max
 
     let mut req = httparse::Request::new(&mut headers);
@@ -57,9 +56,8 @@ fn handle_connection(mut stream: TcpStream) {
         .status(StatusCode::BAD_REQUEST)
         .body(())
         .unwrap();
-    let res_vec = response_header_to_vec(&res); // how do we include the body
+    let res_vec = response_header_to_vec(&res);
     stream.write_all(&res_vec).unwrap();
-
 }
 
 fn handle_req(mut stream: TcpStream, path: PathBuf) {
@@ -79,6 +77,7 @@ fn handle_req(mut stream: TcpStream, path: PathBuf) {
 
                 res_vec.write(res.body()).unwrap();
                 stream.write_all(&res_vec).unwrap();
+                stream.flush().unwrap();
             }
         }
     }
@@ -98,6 +97,7 @@ fn handle_req(mut stream: TcpStream, path: PathBuf) {
         let mut res_vec = response_header_to_vec(&res); // how do we include the body
         res_vec.write(contents).unwrap();
         stream.write_all(&res_vec).unwrap();
+        stream.flush().unwrap();
     }
     // 404
     let res = Response::builder()
@@ -106,4 +106,5 @@ fn handle_req(mut stream: TcpStream, path: PathBuf) {
         .unwrap();
     let res_vec = response_header_to_vec(&res); // how do we include the body
     stream.write_all(&res_vec).unwrap();
+    stream.flush().unwrap();
 }
