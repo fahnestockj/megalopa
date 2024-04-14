@@ -93,7 +93,7 @@ fn handle_req(mut stream: TcpStream, path: PathBuf) {
             .header("content-length", length)
             .body(contents)
             .unwrap();
-        let mut res_vec = response_header_to_vec(&res); // how do we include the body
+        let mut res_vec = response_header_to_vec(&res);
         res_vec.write(contents).unwrap();
         stream.write_all(&res_vec).unwrap();
         stream.flush().unwrap();
@@ -103,7 +103,7 @@ fn handle_req(mut stream: TcpStream, path: PathBuf) {
         .status(StatusCode::NOT_FOUND)
         .body(())
         .unwrap();
-    let res_vec = response_header_to_vec(&res); // how do we include the body
+    let res_vec = response_header_to_vec(&res);
     stream.write_all(&res_vec).unwrap();
     stream.flush().unwrap();
 }

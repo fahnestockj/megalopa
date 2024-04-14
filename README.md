@@ -23,7 +23,6 @@ megalopa new <page-name>
 # Host a local development server on port 3000
 megalopa dev
 
-
 ```
 
 ## Project Directory Structure
@@ -42,3 +41,14 @@ Project-Name/
 │   └── ...
 
 ```
+
+## Templates
+Megalopa uses the [Tera](https://keats.github.io/tera/) templating engine. You can overwrite the default templates by creating a `templates` directory in the root of your project.
+
+Megalopa comes with default templates defined as follows:
+
+base.html - The base template that all other templates extend from.
+index.html - The template for the index pages. Including a modifiable list of content.
+content.html - The template for content pages.
+homepage.html - The template for the homepage.
+

@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     {% block head %}
-    <link rel="stylesheet" href="style.css" />
-    <title>{% block title %}{% endblock title %} - My Webpage</title>
+    <link rel="stylesheet" href="index.css" />
+    <title>{% block title %}{% endblock title %}{{ title }}</title>
     {% endblock head %}
 </head>
 <body>
     <div id="content">{% block content %}{% endblock content %}</div>
     <div id="footer">
         {% block footer %}
-        &copy; Copyright 2024 by <a href="http://domain.invalid/">you</a>.
+        &copy; Copyright 2024.
         {% endblock footer %}
     </div>
 </body>
