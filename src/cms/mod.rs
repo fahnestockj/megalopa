@@ -5,10 +5,10 @@ use std::io;
 use std::path;
 use std::path::PathBuf;
 
-use crate::utils::get_project_cwd;
+use crate::utils::get_project_dir;
 /// Run through md files in content and generate html from them!
 pub fn build() {
-    let proj_content_dir = get_project_cwd().join("content");
+    let proj_content_dir = get_project_dir().join("content");
     walk_dir(proj_content_dir).unwrap();
 }
 
@@ -16,7 +16,7 @@ pub fn build() {
 fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
     assert_eq!(file_path.extension().unwrap(), "md");
 
-    let proj_path = get_project_cwd();
+    let proj_path = get_project_dir();
     let md_str = fs::read_to_string(file_path.clone()).unwrap();
     let html_contents = markdown::to_html(&md_str);
     // we need the relative path after /content from the file_path

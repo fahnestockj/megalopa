@@ -21,6 +21,8 @@ pub enum Command {
         #[arg(default_value_t = 3000)]
         port: u16,
     },
+    /// Build your md files => html files
     Build {},
+    /// Initialize a new project (in cwd)
     Init {},
 }

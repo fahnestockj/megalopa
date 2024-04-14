@@ -7,7 +7,7 @@ use std::io::{BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
 
-use crate::utils::get_project_cwd;
+use crate::utils::get_project_dir;
 
 pub fn start_dev_server(port: u16) {
     let mut addr = "127.0.0.1:".to_owned();
@@ -29,7 +29,7 @@ pub fn start_dev_server(port: u16) {
 }
 
 fn handle_connection(mut stream: TcpStream) {
-    let cwd = get_project_cwd().clone();
+    let cwd = get_project_dir();
 
     let buf_reader = BufReader::new(&mut stream);
     let mut req_buf = Vec::new();
@@ -38,7 +38,6 @@ fn handle_connection(mut stream: TcpStream) {
 
     let mut req = httparse::Request::new(&mut headers);
     req.parse(&req_buf).unwrap(); // TODO: handle better
-                                  // let's confirm we have all needed and return a 400 Bad Request otherwise
 
     if let (Some(req_method), Some(req_version), Some(req_path)) =
         (req.method, req.version, req.path)
@@ -51,7 +50,7 @@ fn handle_connection(mut stream: TcpStream) {
             }
         }
     }
-    // 500 bad req
+    // 400 bad req
     let res = Response::builder()
         .status(StatusCode::BAD_REQUEST)
         .body(())
