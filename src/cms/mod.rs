@@ -4,36 +4,55 @@ use std::fs;
 use std::io;
 use std::path;
 use std::path::PathBuf;
+use tera::Tera;
 
 use crate::utils::get_project_dir;
 /// Run through md files in content and generate html from them!
 pub fn build() {
     let proj_content_dir = get_project_dir().join("content");
-    walk_dir(proj_content_dir).unwrap();
+    let mut tera = match Tera::new("../templates/**/*.html") {
+        Ok(t) => t,
+        Err(e) => {
+            panic!("Parsing erro(s): {}", e);
+            
+        }
+    };
+    // We're relying on the markdown package to safely escape user markdown content 
+    // (which is all we support for now)
+    tera.autoescape_on(vec![]);
+
+    walk_dir(proj_content_dir, &tera, build_file).unwrap();
 }
 
-/// recursively walks through the dir and calls parse_file_to_html_and_write_to_build on files
-fn walk_dir(dir_path: path::PathBuf) -> io::Result<()> {
+/// recursively walks through the dir and calls cb on files
+fn walk_dir(dir_path: path::PathBuf, tera: &Tera, cb: fn(path::PathBuf, &Tera) -> ()) -> io::Result<()> {
     if dir_path.is_dir() {
         for f_entry in fs::read_dir(dir_path)? {
             let f_entry = f_entry?;
             if f_entry.path().is_dir() {
-                walk_dir(f_entry.path())?;
+                walk_dir(f_entry.path(), tera, cb)?;
             } else {
-                parse_file_to_html_and_write_to_build(f_entry.path())
+                cb(f_entry.path(), tera);
             }
         }
     }
     Ok(())
 }
 
-/// Parsed md -> html and writes to the same path in the /public dir
-fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
+/// md -> html content -> injected into template
+/// also writes to the same path in the /public dir
+fn build_file(file_path: path::PathBuf, tera: &Tera) -> () {
     assert_eq!(file_path.extension().unwrap(), "md");
 
     let proj_path = get_project_dir();
     let md_str = fs::read_to_string(file_path.clone()).unwrap();
     let html_contents = markdown::to_html(&md_str);
+    
+    let mut context = tera::Context::new();
+    context.insert("content", &html_contents);
+    let contents = tera.render("child.html", &context).unwrap();
+    
+    
     // we need the relative path after /content from the file_path
     // I guess we pop the pathbuf until we find content?
     let file_path_clone = file_path.clone();
@@ -50,5 +69,5 @@ fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
         .join(file_path);
     build_file_path.set_extension("html");
     fs::create_dir_all(build_file_path.parent().unwrap()).unwrap();
-    fs::write(build_file_path, html_contents).unwrap();
+    fs::write(build_file_path, contents).unwrap();
 }
