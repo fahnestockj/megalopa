@@ -12,6 +12,21 @@ pub fn build() {
     walk_dir(proj_content_dir).unwrap();
 }
 
+/// recursively walks through the dir and calls parse_file_to_html_and_write_to_build on files
+fn walk_dir(dir_path: path::PathBuf) -> io::Result<()> {
+    if dir_path.is_dir() {
+        for f_entry in fs::read_dir(dir_path)? {
+            let f_entry = f_entry?;
+            if f_entry.path().is_dir() {
+                walk_dir(f_entry.path())?;
+            } else {
+                parse_file_to_html_and_write_to_build(f_entry.path())
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Parsed md -> html and writes to the same path in the /public dir
 fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
     assert_eq!(file_path.extension().unwrap(), "md");
@@ -36,18 +51,4 @@ fn parse_file_to_html_and_write_to_build(file_path: path::PathBuf) {
     build_file_path.set_extension("html");
     fs::create_dir_all(build_file_path.parent().unwrap()).unwrap();
     fs::write(build_file_path, html_contents).unwrap();
-}
-/// recursively walks through the dir and calls parse_file_to_html_and_write_to_build on files
-fn walk_dir(dir_path: path::PathBuf) -> io::Result<()> {
-    if dir_path.is_dir() {
-        for f_entry in fs::read_dir(dir_path)? {
-            let f_entry = f_entry?;
-            if f_entry.path().is_dir() {
-                walk_dir(f_entry.path())?;
-            } else {
-                parse_file_to_html_and_write_to_build(f_entry.path())
-            }
-        }
-    }
-    Ok(())
 }
