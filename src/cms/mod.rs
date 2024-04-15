@@ -31,19 +31,22 @@ pub fn build() {
 fn walk_dir(
     dir_path: &path::PathBuf,
     tera: &Tera,
-    cb: fn(path::PathBuf, &Tera, &Vec<FileMetadata>, &Vec<DirMetadata>) -> (),
+    cb: fn(path::PathBuf, &Tera, &Vec<ContentFileMetadata>, &Vec<IndexFileMetadata>) -> (),
 ) -> io::Result<()> {
     if dir_path.is_dir() {
-        let mut f_metadata_vec: Vec<FileMetadata> = vec![];
-        let mut dir_metadata_vec: Vec<DirMetadata> = vec![];
+        let mut content_f_metadata_vec: Vec<ContentFileMetadata> = vec![];
+        let mut index_f_metadata_vec: Vec<IndexFileMetadata> = vec![];
         for f_entry in fs::read_dir(&dir_path)? {
             let f_entry = f_entry?;
             let f_path = f_entry.path();
-            if f_path.is_file() && f_path.extension().is_some_and(|ext| ext == "md") {
-                f_metadata_vec.push(parse_f_metadata_from_md(&f_path));
+            if f_path.is_file()
+                && f_path.extension().is_some_and(|ext| ext == "md")
+                && f_entry.file_name().ne("index.md")
+            {
+                content_f_metadata_vec.push(parse_f_metadata_from_md(&f_path));
             }
             if f_path.is_dir() {
-                dir_metadata_vec.push(parse_metadata_from_dir(&f_path))
+                index_f_metadata_vec.push(parse_index_f_metadata(&f_path))
             }
         }
         for f_entry in fs::read_dir(&dir_path)? {
@@ -51,7 +54,12 @@ fn walk_dir(
             if f_entry.path().is_dir() {
                 walk_dir(&f_entry.path(), tera, cb)?;
             } else {
-                cb(f_entry.path(), tera, &f_metadata_vec, &dir_metadata_vec);
+                cb(
+                    f_entry.path(),
+                    tera,
+                    &content_f_metadata_vec,
+                    &index_f_metadata_vec,
+                );
             }
         }
     }
@@ -63,8 +71,8 @@ fn walk_dir(
 fn build_file(
     file_path: path::PathBuf,
     tera: &Tera,
-    f_metadata_vec: &Vec<FileMetadata>,
-    dir_metadata_vec: &Vec<DirMetadata>,
+    content_f_metadata_vec: &Vec<ContentFileMetadata>,
+    index_f_metadata_vec: &Vec<IndexFileMetadata>,
 ) -> () {
     assert_eq!(file_path.extension().unwrap(), "md");
 
@@ -89,16 +97,16 @@ fn build_file(
         // root index.md is the homepage - so it will be "index.html"
         if let None = relative_path.parent().unwrap().parent() {
             // build homepage
-            context.insert("dir_metadata_vec", dir_metadata_vec);
+            context.insert("dir_metadata_vec", index_f_metadata_vec);
             file_contents = tera.render("homepage.html", &context).unwrap();
         } else {
             // build index page
-            context.insert("file_metadata_vec", f_metadata_vec);
+            context.insert("file_metadata_vec", content_f_metadata_vec);
             file_contents = tera.render("index.html", &context).unwrap();
         }
     } else {
         // build content page
-        let f_metadata = f_metadata_vec
+        let f_metadata = content_f_metadata_vec
             .into_iter()
             .find(|f_metadata| f_metadata.path.eq(&relative_path))
             .unwrap();
@@ -112,7 +120,7 @@ fn build_file(
 }
 
 #[derive(Debug, Serialize)]
-struct FileMetadata {
+struct ContentFileMetadata {
     title: String,
     path: PathBuf,
 }
@@ -137,26 +145,26 @@ fn parse_frontmatter_from_md<T: for<'a> serde::Deserialize<'a>>(
 }
 
 /// defaults to the file name as a title if one isn't found
-fn parse_f_metadata_from_md(f_path: &PathBuf) -> FileMetadata {
+fn parse_f_metadata_from_md(f_path: &PathBuf) -> ContentFileMetadata {
     let md_str = fs::read_to_string(&f_path).unwrap();
     // try to parse from frontmatter
     if let Ok(frontmatter) = parse_frontmatter_from_md::<MdContentFileFrontmatter>(&md_str) {
         if let Some(file_title) = frontmatter.title {
-            return FileMetadata {
+            return ContentFileMetadata {
                 title: file_title,
                 path: get_relative_file_path_for_routing(f_path, "content"),
             };
         }
     }
     // default to the filename
-    return FileMetadata {
+    return ContentFileMetadata {
         title: String::from(f_path.file_stem().unwrap().to_str().unwrap()),
         path: get_relative_file_path_for_routing(f_path, "content"),
     };
 }
 
 #[derive(Serialize)]
-struct DirMetadata {
+struct IndexFileMetadata {
     content_name: String,
     path: PathBuf,
 }
@@ -165,19 +173,19 @@ struct MdIndexFileFrontmatter {
     content_title: Option<String>,
 }
 /// parses content name from dir - is this in index.md frontmatter? if it is it needs a different variable name...
-fn parse_metadata_from_dir(dir_path: &path::PathBuf) -> DirMetadata {
+fn parse_index_f_metadata(dir_path: &path::PathBuf) -> IndexFileMetadata {
     // we currently store dir metadata on the index.md under the var "content_name" in the frontmatter
     let index_f_path = dir_path.join("index.md");
     let md_str = fs::read_to_string(index_f_path).expect("Couldn't find an index.md in dir");
     if let Ok(frontmatter) = parse_frontmatter_from_md::<MdIndexFileFrontmatter>(&md_str) {
         if let Some(content_name) = frontmatter.content_title {
-            return DirMetadata {
+            return IndexFileMetadata {
                 content_name,
                 path: get_relative_file_path_for_routing(&dir_path, "content"),
             };
         };
     };
-    return DirMetadata {
+    return IndexFileMetadata {
         content_name: String::from(dir_path.file_stem().unwrap().to_str().unwrap()),
         path: get_relative_file_path_for_routing(&dir_path, "content"),
     };
