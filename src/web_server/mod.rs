@@ -59,45 +59,46 @@ fn handle_connection(mut stream: TcpStream) {
     stream.write_all(&res_vec).unwrap();
 }
 
-fn handle_req(mut stream: TcpStream, path: PathBuf) {
-    // so the path either ends in html or we're serving index.html
-    if let Some(extension) = path.extension() {
-        if extension == "html" {
-            if let Ok(contents) = fs::read(path.clone()) {
-                let length = contents.len();
-                let res = Response::builder()
-                    .status(StatusCode::OK)
-                    .header("Content-Type", "text/html")
-                    .header("content-length", length)
-                    .body(contents)
-                    .unwrap();
+fn handle_req(mut stream: TcpStream, mut path: PathBuf) {
+    // if the path is a dir try to serve index.html
+    if path.is_dir() {
+        //try to serve index.html
+        let index_path = path.join("index.html");
+        if let Ok(r_contents) = fs::read_to_string(index_path) {
+            let contents = r_contents.as_bytes();
+            let length = contents.len();
 
-                let mut res_vec = response_header_to_vec(&res);
+            let res = Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html")
+                .header("content-length", length)
+                .body(contents)
+                .unwrap();
+            let mut res_vec = response_header_to_vec(&res);
+            res_vec.write(contents).unwrap();
+            stream.write_all(&res_vec).unwrap();
+            stream.flush().unwrap();
+        }
+    } else {
+        // it must be an html file!
+        path.set_extension("html");
+        if let Ok(contents) = fs::read(&path) {
+            let length = contents.len();
+            let res = Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html")
+                .header("content-length", length)
+                .body(contents)
+                .unwrap();
 
-                res_vec.write(res.body()).unwrap();
-                stream.write_all(&res_vec).unwrap();
-                stream.flush().unwrap();
-            }
+            let mut res_vec = response_header_to_vec(&res);
+
+            res_vec.write(res.body()).unwrap();
+            stream.write_all(&res_vec).unwrap();
+            stream.flush().unwrap();
         }
     }
 
-    //try to serve index.html
-    let index_path = path.join("index.html");
-    if let Ok(r_contents) = fs::read_to_string(index_path) {
-        let contents = r_contents.as_bytes();
-        let length = contents.len();
-
-        let res = Response::builder()
-            .status(StatusCode::OK)
-            .header("Content-Type", "text/html")
-            .header("content-length", length)
-            .body(contents)
-            .unwrap();
-        let mut res_vec = response_header_to_vec(&res);
-        res_vec.write(contents).unwrap();
-        stream.write_all(&res_vec).unwrap();
-        stream.flush().unwrap();
-    }
     // 404
     let res = Response::builder()
         .status(StatusCode::NOT_FOUND)
