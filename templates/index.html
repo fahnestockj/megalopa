@@ -5,3 +5,10 @@
 {% block content %}
 {{ content }}
 {% endblock content %}
+<ul>
+  {% for metadata in file_metadata_vec %}
+  <li><a href="{{ metadata.path }}">{{ metadata.title }}</a></li>
+  {% else %}
+  No content...
+  {% endfor %}
+</ul>

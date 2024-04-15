@@ -4,4 +4,12 @@
 {% endblock head %}
 {% block content %}
 {{ content }}
+<ul>
+  {% for metadata in dir_metadata_vec %}
+  <li><a href="{{ metadata.path }}">{{ metadata.content_name }}</a></li>
+  {% else %}
+  No dirs...
+  {% endfor %}
+</ul>
+
 {% endblock content %}
