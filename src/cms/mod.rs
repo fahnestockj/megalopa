@@ -82,7 +82,19 @@ fn build_file(
     let mut build_file_path = get_build_path(&file_path, &proj_path);
 
     let md_str = fs::read_to_string(file_path.clone()).unwrap();
-    let html_contents = markdown::to_html(&md_str);
+
+    let options = markdown::Options {
+        parse: markdown::ParseOptions {
+            constructs: markdown::Constructs {
+                frontmatter: true,
+                ..markdown::Constructs::default()
+            },
+            ..markdown::ParseOptions::default()
+        },
+        ..markdown::Options::default()
+    };
+
+    let html_contents = markdown::to_html_with_options(&md_str, &options).unwrap();
 
     let mut context = tera::Context::new();
     context.insert("content", &html_contents);
