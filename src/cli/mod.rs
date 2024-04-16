@@ -15,6 +15,7 @@ pub enum Command {
     /// Write something in your larva
     New {
         title: String,
+        content_name: String,
     },
     /// Host a local web server
     Dev {
