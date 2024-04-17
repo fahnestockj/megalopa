@@ -1,16 +1,20 @@
-mod threads;
 mod file_watcher;
+mod http_header_utils;
+mod threads;
+use crate::cms::build;
+use crate::utils::get_project_dir;
+use crate::web_server::file_watcher::setup_file_watcher;
+use crate::web_server::http_header_utils::parse_headers;
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
-use std::fs;
 use std::io::{BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
-use crate::utils::get_project_dir;
-use crate::web_server::file_watcher::setup_file_watcher;
+use std::{self, fs};
 
 pub fn start_dev_server(port: u16) {
+    build();
     let mut addr = "127.0.0.1:".to_owned();
     addr.push_str(&port.to_string());
 
@@ -24,7 +28,6 @@ pub fn start_dev_server(port: u16) {
         "\n\n\tHosting a local web server at: http://localhost:{} \n\n",
         &port.to_string(),
     );
-
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
@@ -41,16 +44,19 @@ fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let mut req_buf = Vec::new();
     buf_reader.take(1000).read_to_end(&mut req_buf).unwrap();
-    let mut headers = [httparse::EMPTY_HEADER; 1000];
+    let mut headers = [httparse::EMPTY_HEADER; 100];
 
     let mut req = httparse::Request::new(&mut headers);
     req.parse(&req_buf).unwrap(); // TODO: handle better
 
-    if let (Some(req_method), Some(req_version), Some(req_path)) =
-        (req.method, req.version, req.path)
+    let r_headers = parse_headers(req.headers);
+
+    if let (Some(req_method), Some(req_version), Some(req_path), Ok(headers)) =
+        (req.method, req.version, req.path, r_headers)
     {
+        dbg!(headers);
         if req_method == "GET" && req_version == 1 {
-            // TODO: strip query instead of this check, or you know make an actual url parser
+            // TODO: strip query instead of this check, or you know make an actual path parser
             if let None = req_path.find('?') {
                 let path = cwd.join("public").join(req_path.strip_prefix("/").unwrap());
                 handle_req(stream, path);
@@ -59,11 +65,12 @@ fn handle_connection(mut stream: TcpStream) {
         }
     }
     // 400 bad req
-    let res = Response::builder()
+
+    let response_400: Response<()> = Response::builder()
         .status(StatusCode::BAD_REQUEST)
         .body(())
         .unwrap();
-    let res_vec = response_header_to_vec(&res);
+    let res_vec = response_header_to_vec(&response_400);
     stream.write_all(&res_vec).unwrap();
 }
 
@@ -108,11 +115,11 @@ fn handle_req(mut stream: TcpStream, mut path: PathBuf) {
     }
 
     // 404
-    let res = Response::builder()
+    let response_404: Response<()> = Response::builder()
         .status(StatusCode::NOT_FOUND)
         .body(())
         .unwrap();
-    let res_vec = response_header_to_vec(&res);
+    let res_vec = response_header_to_vec(&response_404);
     stream.write_all(&res_vec).unwrap();
     stream.flush().unwrap();
 }
