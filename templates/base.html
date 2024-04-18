@@ -1,10 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     {% block head %}
     <title>{% block title %}{% endblock title %}{{ title }}</title>
     {% endblock head %}
+    <script>
+        // Create WebSocket connection.
+        const socket = new WebSocket("ws://localhost:3000");
+        // Connection opened
+        socket.addEventListener("open", (event) => {
+            socket.send("Hello Server!");
+        });
+
+        // Listen for messages
+        socket.addEventListener("message", (event) => {
+            console.log("Message from server ", event.data);
+            window.location.reload()
+            socket.close()
+            // appendElement("div", event.data, "content")
+        });
+
+        // function appendElement(elemNode, textNode, containerToAppend) {
+        //     var container = document.getElementById(containerToAppend);
+        //     var element = document.createElement(elemNode);
+        //     var text = document.createTextNode(textNode);
+        //     element.appendChild(text);
+        //     container.appendChild(element);
+        // }
+    </script>
 </head>
+
 <body>
     <div id="content">{% block content %}{% endblock content %}</div>
     <div id="footer">
@@ -13,4 +39,5 @@
         {% endblock footer %}
     </div>
 </body>
+
 </html>

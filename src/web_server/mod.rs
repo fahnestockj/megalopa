@@ -5,22 +5,27 @@ use crate::cms::build;
 use crate::utils::get_project_dir;
 use crate::web_server::file_watcher::setup_file_watcher;
 use crate::web_server::http_header_utils::parse_headers;
+use core::time;
+use std::time::Duration;
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
-use std::io::{BufReader, Read, Write};
+use notify::{RecursiveMode, Watcher};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
+use std::task::ready;
+use std::thread::{panicking, sleep};
 use std::{self, fs};
+use tungstenite::protocol::frame::coding::CloseCode;
+use tungstenite::protocol::CloseFrame;
+use tungstenite::WebSocket;
+use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
 pub fn start_dev_server(port: u16) {
     build();
     let mut addr = "127.0.0.1:".to_owned();
     addr.push_str(&port.to_string());
-
-    let cwd = get_project_dir();
-    let content_dir = cwd.join("content");
-    setup_file_watcher(&content_dir.as_path()).unwrap();
 
     let listener = TcpListener::bind(&addr).unwrap();
     let pool = threads::ThreadPool::new(4);
@@ -37,26 +42,68 @@ pub fn start_dev_server(port: u16) {
     }
     println!("Shutting down")
 }
-
 fn handle_connection(mut stream: TcpStream) {
     let cwd = get_project_dir();
 
-    let buf_reader = BufReader::new(&mut stream);
-    let mut req_buf = Vec::new();
-    buf_reader.take(1000).read_to_end(&mut req_buf).unwrap();
+    // let mut buf_reader = BufReader::new(&mut stream);
+    // let recieved: Vec<u8> = buf_reader.fill_buf().unwrap().to_vec();
+    // buf_reader.consume(recieved.len());
+
+    // let mut recieved: Vec<u8> = vec![];
+    let mut recieved = [0u8; 1000];
+    let bytes_peeked = stream.peek(&mut recieved).unwrap();
+    assert_ne!(bytes_peeked, 0);
+
     let mut headers = [httparse::EMPTY_HEADER; 100];
 
     let mut req = httparse::Request::new(&mut headers);
-    req.parse(&req_buf).unwrap(); // TODO: handle better
-
+    req.parse(&recieved).expect("http parse of request failed"); // TODO: handle better
     let r_headers = parse_headers(req.headers);
-
     if let (Some(req_method), Some(req_version), Some(req_path), Ok(headers)) =
         (req.method, req.version, req.path, r_headers)
     {
-        dbg!(headers);
+        // setup websockets!
+        if let (Some(_), Some(upgrade_header)) = (headers.get("Connection"), headers.get("Upgrade"))
+        {
+            if upgrade_header.eq(&"websocket") {
+                // stream.set_nonblocking(true).unwrap();
+                println!("WEBSOCKEN");
+                println!("Why");
+
+                let cwd = get_project_dir();
+                let content_dir = cwd.join("content");
+
+                let mut socket = accept(stream).unwrap();
+
+                let (tx, rx) = std::sync::mpsc::channel::<bool>();
+
+                // setup_file_watcher(&content_dir.as_path()).unwrap();
+                let mut watcher = notify::recommended_watcher(move |res| match res {
+                    Ok(event) => {
+                        // println!("change detected: {:?}", event);
+                        build();
+                        tx.send(true).unwrap();
+                    }
+                    Err(e) => println!("watch error: {:?}", e),
+                })
+                .unwrap();
+                watcher
+                    .watch(content_dir.as_path(), RecursiveMode::Recursive)
+                    .unwrap();
+
+                loop {
+                    let recieved_data = rx.recv().unwrap();
+                    if recieved_data {
+                        socket.send(Message::text(String::from("Reload!"))).unwrap();
+                        break;
+                    }
+                }
+                println!("After");
+                return;
+            }
+        }
         if req_method == "GET" && req_version == 1 {
-            // TODO: strip query instead of this check, or you know make an actual path parser
+            // TODO: strip query instead of this check, or you know make an actual url parser
             if let None = req_path.find('?') {
                 let path = cwd.join("public").join(req_path.strip_prefix("/").unwrap());
                 handle_req(stream, path);
@@ -64,7 +111,6 @@ fn handle_connection(mut stream: TcpStream) {
             }
         }
     }
-    // 400 bad req
 
     let response_400: Response<()> = Response::builder()
         .status(StatusCode::BAD_REQUEST)
@@ -114,7 +160,6 @@ fn handle_req(mut stream: TcpStream, mut path: PathBuf) {
         }
     }
 
-    // 404
     let response_404: Response<()> = Response::builder()
         .status(StatusCode::NOT_FOUND)
         .body(())
