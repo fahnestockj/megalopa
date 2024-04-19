@@ -27,7 +27,7 @@ pub fn build() {
     walk_dir(&proj_content_dir, &tera, build_file).unwrap();
 }
 
-/// recursively walks through the dir and calls cb on files
+/// recursively walks through the dir and calls cb on files (also parses frontmatter out of md)
 fn walk_dir(
     dir_path: &path::PathBuf,
     tera: &Tera,
@@ -65,7 +65,6 @@ fn walk_dir(
     }
     Ok(())
 }
-
 /// md -> html content -> injected into template
 /// also writes to the same path in the /public dir
 fn build_file(

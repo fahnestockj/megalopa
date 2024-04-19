@@ -1,26 +1,18 @@
-mod file_watcher;
 mod http_header_utils;
 mod threads;
+
 use crate::cms::build;
 use crate::utils::get_project_dir;
-use crate::web_server::file_watcher::setup_file_watcher;
 use crate::web_server::http_header_utils::parse_headers;
-use core::time;
-use std::time::Duration;
+
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
 use notify::{RecursiveMode, Watcher};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::task::ready;
-use std::thread::{panicking, sleep};
 use std::{self, fs};
-use tungstenite::protocol::frame::coding::CloseCode;
-use tungstenite::protocol::CloseFrame;
-use tungstenite::WebSocket;
-use tungstenite::{accept, handshake::HandshakeRole, Error, HandshakeError, Message, Result};
 
 pub fn start_dev_server(port: u16) {
     build();
@@ -45,11 +37,6 @@ pub fn start_dev_server(port: u16) {
 fn handle_connection(mut stream: TcpStream) {
     let cwd = get_project_dir();
 
-    // let mut buf_reader = BufReader::new(&mut stream);
-    // let recieved: Vec<u8> = buf_reader.fill_buf().unwrap().to_vec();
-    // buf_reader.consume(recieved.len());
-
-    // let mut recieved: Vec<u8> = vec![];
     let mut recieved = [0u8; 1000];
     let bytes_peeked = stream.peek(&mut recieved).unwrap();
     assert_ne!(bytes_peeked, 0);
@@ -59,56 +46,56 @@ fn handle_connection(mut stream: TcpStream) {
     let mut req = httparse::Request::new(&mut headers);
     req.parse(&recieved).expect("http parse of request failed"); // TODO: handle better
     let r_headers = parse_headers(req.headers);
-    if let (Some(req_method), Some(req_version), Some(req_path), Ok(headers)) =
+    if let (Some(req_method), Some(req_version), Some(mut req_path), Ok(headers)) =
         (req.method, req.version, req.path, r_headers)
     {
         // setup websockets!
         if let (Some(_), Some(upgrade_header)) = (headers.get("Connection"), headers.get("Upgrade"))
         {
             if upgrade_header.eq(&"websocket") {
-                // stream.set_nonblocking(true).unwrap();
-                println!("WEBSOCKEN");
-                println!("Why");
-
                 let cwd = get_project_dir();
                 let content_dir = cwd.join("content");
 
-                let mut socket = accept(stream).unwrap();
+                let mut socket = tungstenite::accept(stream).unwrap();
 
                 let (tx, rx) = std::sync::mpsc::channel::<bool>();
 
-                // setup_file_watcher(&content_dir.as_path()).unwrap();
-                let mut watcher = notify::recommended_watcher(move |res| match res {
-                    Ok(event) => {
-                        // println!("change detected: {:?}", event);
-                        build();
-                        tx.send(true).unwrap();
-                    }
-                    Err(e) => println!("watch error: {:?}", e),
-                })
+                let mut watcher = notify::recommended_watcher(
+                    move |res: Result<notify::Event, notify::Error>| match res {
+                        Ok(event) => {
+                            if event.kind.is_modify() {
+                                build();
+                                tx.send(true).unwrap();
+                            }
+                        }
+                        Err(e) => println!("watch error: {:?}", e),
+                    },
+                )
                 .unwrap();
                 watcher
                     .watch(content_dir.as_path(), RecursiveMode::Recursive)
                     .unwrap();
 
-                loop {
-                    let recieved_data = rx.recv().unwrap();
-                    if recieved_data {
-                        socket.send(Message::text(String::from("Reload!"))).unwrap();
-                        break;
-                    }
+                // blocks here until something is recieved
+                let file_changed = rx.recv().unwrap();
+                if file_changed {
+                    println!("File change detected, rebuilding...");
+                    socket
+                        .send(tungstenite::Message::text(String::from("Reload!")))
+                        .unwrap();
                 }
-                println!("After");
                 return;
             }
         }
         if req_method == "GET" && req_version == 1 {
-            // TODO: strip query instead of this check, or you know make an actual url parser
-            if let None = req_path.find('?') {
-                let path = cwd.join("public").join(req_path.strip_prefix("/").unwrap());
-                handle_req(stream, path);
-                return;
+            // strip out query if there is one...
+            if let Some(query_idx) = req_path.find('?') {
+                req_path = &req_path[0..query_idx];
             }
+            req_path = req_path.strip_prefix("/").expect("req_path isn't relative...");
+            let path = cwd.join("public").join(req_path);
+            handle_req(stream, path);
+            return;
         }
     }
 
@@ -121,7 +108,6 @@ fn handle_connection(mut stream: TcpStream) {
 }
 
 fn handle_req(mut stream: TcpStream, mut path: PathBuf) {
-    // if the path is a dir try to serve index.html
     if path.is_dir() {
         //try to serve index.html
         let index_path = path.join("index.html");
