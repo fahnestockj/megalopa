@@ -1,6 +1,6 @@
 use clap::Parser;
 use megalopa::cli::{Cli, Command, self};
-use megalopa::cms::build;
+use megalopa::build::build;
 use megalopa::web_server;
 
 fn main() {

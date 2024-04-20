@@ -1,7 +1,7 @@
 mod http_header_utils;
 mod threads;
 
-use crate::cms::build;
+use crate::build::build;
 use crate::utils::get_project_dir;
 use crate::web_server::http_header_utils::parse_headers;
 
@@ -92,7 +92,9 @@ fn handle_connection(mut stream: TcpStream) {
             if let Some(query_idx) = req_path.find('?') {
                 req_path = &req_path[0..query_idx];
             }
-            req_path = req_path.strip_prefix("/").expect("req_path isn't relative...");
+            req_path = req_path
+                .strip_prefix("/")
+                .expect("req_path isn't relative...");
             let path = cwd.join("public").join(req_path);
             handle_req(stream, path);
             return;

@@ -1,8 +1,8 @@
 
 # Megalopa
 
-Megalopa is an accessible framework for crafting static sites. 🦀
-Organize and grow your larva sized brain in the vast sea of technical knowledge. Use your abdominal appendage to propel yourself forward. Serve it in a website or something idk you'll figure it out.
+Megalopa is an accessible tool for crafting static sites. 🦀
+Organize and grow your larva sized brain in the vast sea of technical knowledge. Use your abdominal appendage to propel yourself forward, and one day grow into a full rustacean.
 
 
 ## Installation
