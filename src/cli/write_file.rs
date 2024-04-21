@@ -5,8 +5,11 @@ use std::io::Write;
 use crate::utils::get_project_dir;
 
 /// Creates a new md file
-pub fn write_file(title: String, content_name: String) -> std::io::Result<()> {
+pub fn write_file(title: String, mut content_name: String) -> std::io::Result<()> {
     let content_template: String = format!("---\ntitle: {}\n----\n\n#", title);
+    if content_name.len() == 0 {
+        content_name = title.clone();
+    }
     let index_template: String = format!("---\ncontent_name: {}\n----\n\n#", content_name);
 
     let cwd = get_project_dir();

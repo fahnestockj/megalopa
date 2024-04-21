@@ -4,20 +4,20 @@ use std::path;
 /// Initialize a project in the current dir
 /// # Panics
 /// Panics if a file config file exists in the current dir
-pub fn init() {
+pub fn init_project(project_name: String) {
     let cwd = env::current_dir().expect("You have no cwd?");
     let config_file_path = cwd.clone().join("larvae.yaml");
     fs::read(config_file_path).expect_err("You already have a project in this dir");
 
     // write a whole bunch of files...
-    create_config_file(&cwd);
+    create_config_file(&cwd, project_name);
     create_gitignore(&cwd);
     create_dirs_and_first_post(&cwd);
 }
 
-fn create_config_file(cwd: &path::PathBuf) {
+fn create_config_file(cwd: &path::PathBuf, project_name: String) {
     let path = cwd.clone().join("larvae.yaml");
-    let contents = format!("title='New Site'\nlanguage_code='en-us'");
+    let contents = format!("title={project_name}\n");
     fs::write(path, contents).expect("Failure creating config file");
 }
 

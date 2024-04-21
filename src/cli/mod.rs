@@ -15,6 +15,8 @@ pub enum Command {
     /// Write something in your larva
     New {
         title: String,
+        // defaults to title if not provided (handled in new fn)
+        #[arg(default_value_t = String::from(""))]
         content_name: String,
     },
     /// Host a local web server
@@ -25,5 +27,7 @@ pub enum Command {
     /// Build your md files => html files
     Build {},
     /// Initialize a new project (in cwd)
-    Init {},
+    Init {
+        project_name: String
+    },
 }
