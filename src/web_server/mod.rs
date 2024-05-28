@@ -9,10 +9,12 @@ use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
 use notify::{RecursiveMode, Watcher};
+use serde::forward_to_deserialize_any;
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::{self, fs};
+use std::time::Duration;
+use std::{self, fs, thread};
 
 pub fn start_dev_server(port: u16) {
     build();
@@ -20,7 +22,7 @@ pub fn start_dev_server(port: u16) {
     addr.push_str(&port.to_string());
 
     let listener = TcpListener::bind(&addr).unwrap();
-    let pool = threads::ThreadPool::new(4);
+    let pool = threads::ThreadPool::new(5);
     println!(
         "\n\n\tHosting a local web server at: http://localhost:{} \n\n",
         &port.to_string(),
@@ -41,7 +43,7 @@ fn handle_connection(mut stream: TcpStream) {
     let bytes_peeked = stream.peek(&mut recieved).unwrap();
     assert_ne!(bytes_peeked, 0);
 
-    let mut headers = [httparse::EMPTY_HEADER; 100];
+    let mut headers = [httparse::EMPTY_HEADER; 20];
 
     let mut req = httparse::Request::new(&mut headers);
     req.parse(&recieved).expect("http parse of request failed"); // TODO: handle better
@@ -57,15 +59,17 @@ fn handle_connection(mut stream: TcpStream) {
                 let content_dir = cwd.join("content");
 
                 let mut socket = tungstenite::accept(stream).unwrap();
-
-                let (tx, rx) = std::sync::mpsc::channel::<bool>();
-
+                enum Message {
+                    FileChanged,
+                }
+                let (tx, rx) = std::sync::mpsc::channel::<Message>();
+                let closure_tx = tx.clone();
                 let mut watcher = notify::recommended_watcher(
                     move |res: Result<notify::Event, notify::Error>| match res {
                         Ok(event) => {
                             if event.kind.is_modify() {
                                 build();
-                                tx.send(true).unwrap();
+                                closure_tx.send(Message::FileChanged).unwrap();
                             }
                         }
                         Err(e) => println!("watch error: {:?}", e),
@@ -76,14 +80,40 @@ fn handle_connection(mut stream: TcpStream) {
                     .watch(content_dir.as_path(), RecursiveMode::Recursive)
                     .unwrap();
 
-                // blocks here until something is recieved
-                let file_changed = rx.recv().unwrap();
-                if file_changed {
-                    println!("File change detected, rebuilding...");
-                    socket
-                        .send(tungstenite::Message::text(String::from("Reload!")))
-                        .unwrap();
+                println!("Websocket opening...");
+                loop {
+                    // we swap between socket.read and seeing if we've recieved a notify message (that a file changed)
+                    let file_notify_msg = rx.recv_timeout(Duration::from_millis(10));
+                    match file_notify_msg {
+                        Ok(msg) => {
+                            println!("File change detected, rebuilding...");
+                            socket
+                                .send(tungstenite::Message::text(String::from("Reload!")))
+                                .unwrap();
+                            break;
+                        }
+                        Err(_) => {}
+                    }
+
+                    let websocket_msg = socket.read();
+                    dbg!(&websocket_msg);
+                    match websocket_msg {
+                        Ok(_) => {}
+                        Err(e) => match e {
+                            tungstenite::Error::AlreadyClosed => {
+                                println!("Websocket connection closed");
+                                break;
+                            }
+                            tungstenite::Error::ConnectionClosed => {
+                                println!("Websocket connection closed");
+                                break;
+                            }
+                            _ => {}
+                        },
+                    }
                 }
+
+                println!("Websocket closing...");
                 return;
             }
         }

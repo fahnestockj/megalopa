@@ -12,12 +12,12 @@ pub fn init_project(project_name: String) {
     // write a whole bunch of files...
     create_config_file(&cwd, project_name);
     create_gitignore(&cwd);
-    create_dirs_and_first_post(&cwd);
+    create_dirs_and_homepage(&cwd);
 }
 
 fn create_config_file(cwd: &path::PathBuf, project_name: String) {
     let path = cwd.clone().join("larvae.yaml");
-    let contents = format!("title={project_name}\n");
+    let contents = format!("title: {project_name}\n");
     fs::write(path, contents).expect("Failure creating config file");
 }
 
@@ -27,12 +27,18 @@ fn create_gitignore(cwd: &path::PathBuf) {
     fs::write(path, contents).expect("Failure creating gitignore");
 }
 
-fn create_dirs_and_first_post(cwd: &path::PathBuf) {
+fn create_dirs_and_homepage(cwd: &path::PathBuf) {
     let path = cwd.clone();
     fs::create_dir(path.join("content")).expect("Failure creating content dir");
 
-    let contents = format!("# Hello World\n");
-    fs::write(path.join("content/hello-world.md"), contents)
+    let homepage_contents = format!("# Hello World\n");
+    fs::write(path.join("content/index.md"), homepage_contents)
         .expect("Failure creating hello-world.md");
+    fs::create_dir(path.join("content/example-content")).expect("Failure creating example content dir");
+
+    let example_index_page = format!("---\ncontent_name: example-content\n---\n # Hi from a content index file");
+    fs::write(path.join("content/example-content/index.md"), example_index_page)
+        .expect("Failure creating example-content/index.md");
+
     fs::create_dir(path.join("public")).expect("Failure creating public dir");
 }

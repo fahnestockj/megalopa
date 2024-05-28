@@ -16,10 +16,14 @@
         // Listen for messages
         socket.addEventListener("message", (event) => {
             console.log("Message from server ", event.data);
-            window.location.reload()
             socket.close()
+            // window.location.reload()
             // appendElement("div", event.data, "content")
         });
+
+        window.onbeforeunload = function () {
+            socket.close();
+        };
 
         // function appendElement(elemNode, textNode, containerToAppend) {
         //     var container = document.getElementById(containerToAppend);
