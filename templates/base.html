@@ -17,21 +17,8 @@
         socket.addEventListener("message", (event) => {
             console.log("Message from server ", event.data);
             socket.close()
-            // window.location.reload()
-            // appendElement("div", event.data, "content")
+            window.location.reload()
         });
-
-        window.onbeforeunload = function () {
-            socket.close();
-        };
-
-        // function appendElement(elemNode, textNode, containerToAppend) {
-        //     var container = document.getElementById(containerToAppend);
-        //     var element = document.createElement(elemNode);
-        //     var text = document.createTextNode(textNode);
-        //     element.appendChild(text);
-        //     container.appendChild(element);
-        // }
     </script>
 </head>
 

@@ -3,7 +3,6 @@ use std::{
     thread,
 };
 
-
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: Option<mpsc::Sender<Job>>,
@@ -61,20 +60,22 @@ struct Worker {
 impl Worker {
     pub fn new(id: usize, reciever: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
         let builder = thread::Builder::new().name(id.to_string());
-        let thread = builder.spawn(move || loop {
-            let message = reciever.lock().unwrap().recv();
+        let thread = builder
+            .spawn(move || loop {
+                let message = reciever.lock().unwrap().recv();
 
-            match message {
-                Ok(job) => {
-                    println!("Worker {id} got a job; executing.");
-                    job();
+                match message {
+                    Ok(job) => {
+                        println!("Worker {id} got a job; executing.");
+                        job();
+                    }
+                    Err(_) => {
+                        println!("Worker {id} disconnected; shutting down");
+                        break;
+                    }
                 }
-                Err(_) => {
-                    println!("Worker {id} disconnected; shutting down");
-                    break;
-                }
-            }
-        }).unwrap();
+            })
+            .unwrap();
 
         Worker {
             id,

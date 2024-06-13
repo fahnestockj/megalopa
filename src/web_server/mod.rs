@@ -9,12 +9,11 @@ use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
 use notify::{RecursiveMode, Watcher};
-use serde::forward_to_deserialize_any;
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::time::Duration;
-use std::{self, fs, thread};
+use std::{self, fs};
 
 pub fn start_dev_server(port: u16) {
     build();
@@ -42,6 +41,7 @@ fn handle_connection(mut stream: TcpStream) {
     let mut recieved = [0u8; 1000];
     let bytes_peeked = stream.peek(&mut recieved).unwrap();
     assert_ne!(bytes_peeked, 0);
+    stream.set_nonblocking(true).unwrap();
 
     let mut headers = [httparse::EMPTY_HEADER; 20];
 
@@ -51,7 +51,6 @@ fn handle_connection(mut stream: TcpStream) {
     if let (Some(req_method), Some(req_version), Some(mut req_path), Ok(headers)) =
         (req.method, req.version, req.path, r_headers)
     {
-        // setup websockets!
         if let (Some(_), Some(upgrade_header)) = (headers.get("Connection"), headers.get("Upgrade"))
         {
             if upgrade_header.eq(&"websocket") {
@@ -63,13 +62,12 @@ fn handle_connection(mut stream: TcpStream) {
                     FileChanged,
                 }
                 let (tx, rx) = std::sync::mpsc::channel::<Message>();
-                let closure_tx = tx.clone();
                 let mut watcher = notify::recommended_watcher(
                     move |res: Result<notify::Event, notify::Error>| match res {
                         Ok(event) => {
                             if event.kind.is_modify() {
                                 build();
-                                closure_tx.send(Message::FileChanged).unwrap();
+                                tx.send(Message::FileChanged).unwrap();
                             }
                         }
                         Err(e) => println!("watch error: {:?}", e),
@@ -82,10 +80,11 @@ fn handle_connection(mut stream: TcpStream) {
 
                 println!("Websocket opening...");
                 loop {
+                    // println!("Are we looping");
                     // we swap between socket.read and seeing if we've recieved a notify message (that a file changed)
                     let file_notify_msg = rx.recv_timeout(Duration::from_millis(10));
                     match file_notify_msg {
-                        Ok(msg) => {
+                        Ok(_) => {
                             println!("File change detected, rebuilding...");
                             socket
                                 .send(tungstenite::Message::text(String::from("Reload!")))
@@ -94,9 +93,7 @@ fn handle_connection(mut stream: TcpStream) {
                         }
                         Err(_) => {}
                     }
-
                     let websocket_msg = socket.read();
-                    dbg!(&websocket_msg);
                     match websocket_msg {
                         Ok(_) => {}
                         Err(e) => match e {
@@ -108,6 +105,9 @@ fn handle_connection(mut stream: TcpStream) {
                                 println!("Websocket connection closed");
                                 break;
                             }
+                            // std::io::ErrorKind::WouldBlock => {
+
+                            // }
                             _ => {}
                         },
                     }
