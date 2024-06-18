@@ -1,18 +1,16 @@
 mod http_header_utils;
+mod open_websocket;
 mod threads;
 
 use crate::build::build;
 use crate::utils::get_project_dir;
-use crate::web_server::http_header_utils::parse_headers;
 
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
-use notify::{RecursiveMode, Watcher};
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{self, fs};
 
 pub fn start_dev_server(port: u16) {
@@ -46,74 +44,15 @@ fn handle_connection(mut stream: TcpStream) {
     let mut headers = [httparse::EMPTY_HEADER; 20];
 
     let mut req = httparse::Request::new(&mut headers);
-    req.parse(&recieved).expect("http parse of request failed"); // TODO: handle better
-    let r_headers = parse_headers(req.headers);
+    req.parse(&recieved).expect("http parse of request failed");
+    let r_headers = http_header_utils::parse_headers(req.headers);
     if let (Some(req_method), Some(req_version), Some(mut req_path), Ok(headers)) =
         (req.method, req.version, req.path, r_headers)
     {
         if let (Some(_), Some(upgrade_header)) = (headers.get("Connection"), headers.get("Upgrade"))
         {
             if upgrade_header.eq(&"websocket") {
-                let cwd = get_project_dir();
-                let content_dir = cwd.join("content");
-
-                let mut socket = tungstenite::accept(stream).unwrap();
-                enum Message {
-                    FileChanged,
-                }
-                let (tx, rx) = std::sync::mpsc::channel::<Message>();
-                let mut watcher = notify::recommended_watcher(
-                    move |res: Result<notify::Event, notify::Error>| match res {
-                        Ok(event) => {
-                            if event.kind.is_modify() {
-                                build();
-                                tx.send(Message::FileChanged).unwrap();
-                            }
-                        }
-                        Err(e) => println!("watch error: {:?}", e),
-                    },
-                )
-                .unwrap();
-                watcher
-                    .watch(content_dir.as_path(), RecursiveMode::Recursive)
-                    .unwrap();
-
-                println!("Websocket opening...");
-                loop {
-                    // println!("Are we looping");
-                    // we swap between socket.read and seeing if we've recieved a notify message (that a file changed)
-                    let file_notify_msg = rx.recv_timeout(Duration::from_millis(10));
-                    match file_notify_msg {
-                        Ok(_) => {
-                            println!("File change detected, rebuilding...");
-                            socket
-                                .send(tungstenite::Message::text(String::from("Reload!")))
-                                .unwrap();
-                            break;
-                        }
-                        Err(_) => {}
-                    }
-                    let websocket_msg = socket.read();
-                    match websocket_msg {
-                        Ok(_) => {}
-                        Err(e) => match e {
-                            tungstenite::Error::AlreadyClosed => {
-                                println!("Websocket connection closed");
-                                break;
-                            }
-                            tungstenite::Error::ConnectionClosed => {
-                                println!("Websocket connection closed");
-                                break;
-                            }
-                            // std::io::ErrorKind::WouldBlock => {
-
-                            // }
-                            _ => {}
-                        },
-                    }
-                }
-
-                println!("Websocket closing...");
+                open_websocket::open_websocket(&stream);
                 return;
             }
         }
