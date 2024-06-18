@@ -36,13 +36,11 @@ Project-Name/
 ├── larvae.yaml # Config file
 ├── content/  # Where you write your content
 │   ├── post1.md
-│   ├── post2.md 
 │   └── ...
 │
 ├── public/  # Where the generated site is stored
 │   ├── index.html
 │   ├── post1.html
-│   ├── post2.html
 │   └── ...
 
 ```

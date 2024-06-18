@@ -3,6 +3,7 @@
 
 <head>
     {% block head %}
+    <link rel="stylesheet" href="/index.css"></link>
     <title>{% block title %}{% endblock title %}{{ title }}</title>
     {% endblock head %}
     <script>
@@ -22,9 +23,9 @@
     </script>
 </head>
 
-<body>
+<body class="body">
     <div id="content">{% block content %}{% endblock content %}</div>
-    <div id="footer">
+    <div id="footer" class="footer">
         {% block footer %}
         &copy; Copyright 2024.
         {% endblock footer %}

@@ -65,7 +65,7 @@ fn handle_connection(mut stream: TcpStream) {
                 .strip_prefix("/")
                 .expect("req_path isn't relative...");
             let path = cwd.join("public").join(req_path);
-            handle_req(stream, path);
+            handle_get_req(stream, path);
             return;
         }
     }
@@ -78,7 +78,7 @@ fn handle_connection(mut stream: TcpStream) {
     stream.write_all(&res_vec).unwrap();
 }
 
-fn handle_req(mut stream: TcpStream, mut path: PathBuf) {
+fn handle_get_req(mut stream: TcpStream, mut path: PathBuf) {
     if path.is_dir() {
         //try to serve index.html
         let index_path = path.join("index.html");
