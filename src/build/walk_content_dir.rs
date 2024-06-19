@@ -1,13 +1,12 @@
 use std::{path, io, fs};
 use tera::Tera;
-
 use super::parse_md::{parse_f_metadata_from_md, parse_index_f_metadata, ContentFileMetadata, IndexFileMetadata};
 
 /// recursively walks through the dir and calls cb on files (also parses frontmatter out of md)
 pub fn walk_content_dir(
     dir_path: &path::PathBuf,
     tera: &Tera,
-    cb: fn(path::PathBuf, &Tera, &Vec<ContentFileMetadata>, &Vec<IndexFileMetadata>) -> (),
+    cb: fn(path::PathBuf, &Tera, &Vec<ContentFileMetadata>, &Vec<IndexFileMetadata>) -> std::io::Result<()>,
 ) -> io::Result<()> {
     if dir_path.is_dir() {
         let mut content_f_metadata_vec: Vec<ContentFileMetadata> = vec![];
@@ -35,7 +34,7 @@ pub fn walk_content_dir(
                     tera,
                     &content_f_metadata_vec,
                     &index_f_metadata_vec,
-                );
+                )?;
             }
         }
     }

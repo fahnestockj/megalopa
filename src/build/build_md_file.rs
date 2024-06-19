@@ -1,4 +1,4 @@
-use std::{path, fs};
+use std::{path, fs, io};
 use tera::Tera;
 use crate::{build::path_utils::{get_build_path, get_relative_file_path_for_routing}, utils::{get_project_dir, read_config}};
 use super::parse_md::{ContentFileMetadata, IndexFileMetadata};
@@ -10,7 +10,7 @@ pub fn build_md_file(
     tera: &Tera,
     content_f_metadata_vec: &Vec<ContentFileMetadata>,
     index_f_metadata_vec: &Vec<IndexFileMetadata>,
-) -> () {
+) -> io::Result<()> {
     assert_eq!(file_path.extension().unwrap(), "md");
 
     let proj_path = get_project_dir();
@@ -18,7 +18,7 @@ pub fn build_md_file(
 
     let mut build_file_path = get_build_path(&file_path, &proj_path);
 
-    let md_str = fs::read_to_string(file_path.clone()).unwrap();
+    let md_str = fs::read_to_string(file_path.clone())?;
 
     let options = markdown::Options {
         parse: markdown::ParseOptions {
@@ -63,6 +63,7 @@ pub fn build_md_file(
     }
 
     build_file_path.set_extension("html");
-    fs::create_dir_all(build_file_path.parent().unwrap()).unwrap();
-    fs::write(build_file_path, file_contents).unwrap();
+    fs::create_dir_all(build_file_path.parent().unwrap())?;
+    fs::write(build_file_path, file_contents)?;
+    Ok(())
 }
