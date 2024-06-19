@@ -19,7 +19,7 @@ mod parse_md;
 /// Run through md files in content and generate html from them!
 pub fn build() {
     let proj_content_dir = get_project_dir().join("content");
-    let mut tera = match Tera::new("../templates/**/*.html") {
+    let mut tera = match Tera::new("../base_templates/**/*.html") {
         Ok(t) => t,
         Err(e) => {
             panic!("Parsing erro(s): {}", e);
