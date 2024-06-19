@@ -1,6 +1,6 @@
 use std::{path, fs, io};
 use tera::Tera;
-use crate::{build::path_utils::{get_build_path, get_relative_file_path_for_routing}, utils::{get_project_dir, read_config}};
+use crate::{build::path_utils::{get_relative_file_path, get_relative_file_path_for_routing}, utils::{get_project_dir, read_config}};
 use super::parse_md::{ContentFileMetadata, IndexFileMetadata};
 
 /// md -> html content -> injected into template
@@ -16,7 +16,8 @@ pub fn build_md_file(
     let proj_path = get_project_dir();
     let proj_config = read_config(&proj_path);
 
-    let mut build_file_path = get_build_path(&file_path, &proj_path);
+    let file_path_relative_to_content_dir = get_relative_file_path(&file_path, "content");
+    let mut build_file_path = proj_path.join("public").join(file_path_relative_to_content_dir);
 
     let md_str = fs::read_to_string(file_path.clone())?;
 

@@ -1,8 +1,7 @@
 use std::{fs, fs::DirEntry, io, path::Path};
 
-use crate::utils::get_project_dir;
+use crate::{build::path_utils::get_relative_file_path, utils::get_project_dir};
 
-use super::path_utils::get_build_path;
 /// recursively walks through the dir and calls cb on files
 pub fn walk_static_dir(dir: &Path, cb: fn(&DirEntry) -> io::Result<()>) -> io::Result<()> {
     if dir.is_dir() {
@@ -23,7 +22,9 @@ pub fn copy_static_file(dir_entry: &DirEntry) -> io::Result<()> {
     assert!(!dir_entry.path().is_dir());
     let proj_path = get_project_dir();
     let file_path = dir_entry.path();
-    let build_path = get_build_path(&file_path, &proj_path);
+    
+    let file_path_relative_to_static_dir = get_relative_file_path(&file_path, "static");
+    let build_path= proj_path.join("public").join(file_path_relative_to_static_dir);
     fs::copy(&file_path, &build_path)?;
     Ok(())
 }

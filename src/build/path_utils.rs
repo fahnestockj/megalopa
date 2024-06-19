@@ -2,27 +2,27 @@ use std::path::{self, PathBuf};
 use std::ffi::OsStr;
 
 /// get an absolute path to public/<relative path from /content>
-pub fn get_build_path(file_path: &PathBuf, proj_path: &PathBuf) -> PathBuf {
-    let relative_path = get_relative_file_path(&file_path, "content");
-    let mut absolute_path = PathBuf::from(proj_path);
-    absolute_path.push("public");
-    absolute_path.push(relative_path);
-    absolute_path
-}
+// pub fn get_build_path(file_path: &PathBuf, proj_path: &PathBuf) -> PathBuf {
+//     let relative_path = get_relative_file_path(&file_path, "content");
+//     let mut absolute_path = PathBuf::from(proj_path);
+//     absolute_path.push("public");
+//     absolute_path.push(relative_path);
+//     absolute_path
+// }
 
 /// given an absolute file path get relative path after provided dir name
-pub fn get_relative_file_path(content_path_ref: &PathBuf, from: &str) -> PathBuf {
-    let content_path = content_path_ref.clone();
+pub fn get_relative_file_path(abs_path: &PathBuf, from: &str) -> PathBuf {
+    let abs_path = abs_path.clone();
     let mut prefix = PathBuf::new();
-    for component in content_path.components() {
+    for component in abs_path.components() {
         prefix.push(component);
         if component.eq(&path::Component::Normal(&OsStr::new(from))) {
             break;
         }
     }
-    assert_ne!(prefix, content_path);
+    assert_ne!(prefix, abs_path);
 
-    content_path.strip_prefix(prefix).unwrap().to_path_buf()
+    abs_path.strip_prefix(prefix).unwrap().to_path_buf()
 }
 
 /// given an absolute path get relative path after provided dir name with no file extension

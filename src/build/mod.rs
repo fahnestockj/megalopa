@@ -15,7 +15,7 @@ mod walk_static_dir;
 /// Run through md files in content and generate html from them!
 pub fn build() {
     let proj_dir = get_project_dir();
-    let mut tera = match Tera::new("../theme/templates/**/*.html") {
+    let mut tera = match Tera::new("../templates/**/*.html") {
         Ok(t) => t,
         Err(e) => {
             panic!("Parsing erro(s): {}", e);
@@ -24,5 +24,5 @@ pub fn build() {
     tera.autoescape_on(vec![]);
 
     walk_content_dir(&proj_dir.join("content"), &tera, build_md_file).unwrap();
-    walk_static_dir(&proj_dir.join("static"), copy_static_file).unwrap();
+    walk_static_dir(&std::path::Path::new("../static"), copy_static_file).unwrap();
 }
