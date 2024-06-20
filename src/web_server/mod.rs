@@ -8,6 +8,8 @@ use crate::utils::get_project_dir;
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
+use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
@@ -80,41 +82,23 @@ fn handle_connection(mut stream: TcpStream) {
 
 fn handle_get_req(mut stream: TcpStream, mut path: PathBuf) {
     if path.is_dir() {
-        //try to serve index.html
-        let index_path = path.join("index.html");
-        if let Ok(r_contents) = fs::read_to_string(index_path) {
-            let contents = r_contents.as_bytes();
-            let length = contents.len();
+        path = path.join("index.html");
+    }
 
-            let res = Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Type", "text/html")
-                .header("content-length", length)
-                .body(contents)
-                .unwrap();
-            let mut res_vec = response_header_to_vec(&res);
-            res_vec.write(contents).unwrap();
-            stream.write_all(&res_vec).unwrap();
-            stream.flush().unwrap();
-        }
-    } else {
-        // it must be an html file!
-        path.set_extension("html");
-        if let Ok(contents) = fs::read(&path) {
-            let length = contents.len();
-            let res = Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Type", "text/html")
-                .header("content-length", length)
-                .body(contents)
-                .unwrap();
-
-            let mut res_vec = response_header_to_vec(&res);
-
-            res_vec.write(res.body()).unwrap();
-            stream.write_all(&res_vec).unwrap();
-            stream.flush().unwrap();
-        }
+    if path.exists() {
+        let content_type = get_content_type_from_file_extension(path.extension().unwrap());
+        let contents = fs::read(&path).unwrap();
+        let length = contents.len();
+        let res = Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", content_type)
+            .header("content-length", length)
+            .body(contents)
+            .unwrap();
+        let mut res_vec = response_header_to_vec(&res);
+        res_vec.write(res.body()).unwrap();
+        stream.write_all(&res_vec).unwrap();
+        stream.flush().unwrap();
     }
 
     let response_404: Response<()> = Response::builder()
@@ -124,4 +108,21 @@ fn handle_get_req(mut stream: TcpStream, mut path: PathBuf) {
     let res_vec = response_header_to_vec(&response_404);
     stream.write_all(&res_vec).unwrap();
     stream.flush().unwrap();
+}
+
+pub fn get_content_type_from_file_extension(extension: &OsStr) -> &str {
+    let supported_content_types: HashMap<&str, &str> = HashMap::from([
+        ("js", "text/javascript"),
+        ("html", "text/html"),
+        ("css", "text/css"),
+    ]);
+    let ext_key = extension
+        .to_str()
+        .expect("extension couldn't be turned a string");
+
+    let content_type = supported_content_types.get(ext_key);
+    match content_type {
+        Some(header) => header,
+        None => panic!("File extension {} not supported", ext_key),
+    }
 }
