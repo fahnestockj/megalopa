@@ -4,6 +4,7 @@ pub fn get_content_type_from_file_extension(extension: &OsStr) -> &str {
         ("js", "text/javascript"),
         ("html", "text/html"),
         ("css", "text/css"),
+        ("svg", "image/svg+xml")
     ]);
     let ext_key = extension
         .to_str()
