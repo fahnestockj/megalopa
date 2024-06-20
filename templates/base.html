@@ -3,7 +3,12 @@
 
 <head>
     {% block head %}
-    <link rel="stylesheet" href="/index.css"></link>
+    <link rel="stylesheet" href="/index.css">
+    </link>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap"
+        rel="stylesheet">
     <title>{% block title %}{% endblock title %}{{ title }}</title>
     {% endblock head %}
     <script>
@@ -23,9 +28,9 @@
     </script>
 </head>
 
-<body class="body">
-    <div id="content">{% block content %}{% endblock content %}</div>
-    <div id="footer" class="footer">
+<body class="color-scheme-dark">
+    <div>{% block content %}{% endblock content %}</div>
+    <div id="footer">
         {% block footer %}
         &copy; Copyright 2024.
         {% endblock footer %}
