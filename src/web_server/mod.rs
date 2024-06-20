@@ -1,15 +1,15 @@
-mod http_header_utils;
+mod get_content_type_from_file_extension;
 mod open_websocket;
+mod parse_http_headers;
 mod threads;
 
 use crate::build::build;
 use crate::utils::get_project_dir;
+use get_content_type_from_file_extension::get_content_type_from_file_extension;
 
 use http_bytes::http::{Response, StatusCode};
 use http_bytes::response_header_to_vec;
 use httparse;
-use std::collections::HashMap;
-use std::ffi::OsStr;
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
@@ -46,8 +46,8 @@ fn handle_connection(mut stream: TcpStream) {
     let mut headers = [httparse::EMPTY_HEADER; 20];
 
     let mut req = httparse::Request::new(&mut headers);
-    req.parse(&recieved).expect("http parse of request failed");
-    let r_headers = http_header_utils::parse_headers(req.headers);
+    req.parse(&recieved).expect("http parse of request failed"); // TODO: respond 400?
+    let r_headers = parse_http_headers::parse_headers(req.headers);
     if let (Some(req_method), Some(req_version), Some(mut req_path), Ok(headers)) =
         (req.method, req.version, req.path, r_headers)
     {
@@ -98,7 +98,6 @@ fn handle_get_req(mut stream: TcpStream, mut path: PathBuf) {
         let mut res_vec = response_header_to_vec(&res);
         res_vec.write(res.body()).unwrap();
         stream.write_all(&res_vec).unwrap();
-        stream.flush().unwrap();
     }
 
     let response_404: Response<()> = Response::builder()
@@ -107,22 +106,4 @@ fn handle_get_req(mut stream: TcpStream, mut path: PathBuf) {
         .unwrap();
     let res_vec = response_header_to_vec(&response_404);
     stream.write_all(&res_vec).unwrap();
-    stream.flush().unwrap();
-}
-
-pub fn get_content_type_from_file_extension(extension: &OsStr) -> &str {
-    let supported_content_types: HashMap<&str, &str> = HashMap::from([
-        ("js", "text/javascript"),
-        ("html", "text/html"),
-        ("css", "text/css"),
-    ]);
-    let ext_key = extension
-        .to_str()
-        .expect("extension couldn't be turned a string");
-
-    let content_type = supported_content_types.get(ext_key);
-    match content_type {
-        Some(header) => header,
-        None => panic!("File extension {} not supported", ext_key),
-    }
 }

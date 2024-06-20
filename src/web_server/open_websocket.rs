@@ -1,6 +1,6 @@
-use std::{net::TcpStream, time::Duration};
-use notify::{RecursiveMode, Watcher};
 use crate::{build, utils::get_project_dir};
+use notify::{RecursiveMode, Watcher};
+use std::{net::TcpStream, time::Duration};
 
 pub fn open_websocket(stream: &TcpStream) -> () {
     let cwd = get_project_dir();
@@ -45,17 +45,10 @@ pub fn open_websocket(stream: &TcpStream) -> () {
         match websocket_msg {
             Ok(_) => {}
             Err(e) => match e {
-                tungstenite::Error::AlreadyClosed => {
+                tungstenite::Error::AlreadyClosed | tungstenite::Error::ConnectionClosed => {
                     println!("Websocket connection closed");
                     break;
                 }
-                tungstenite::Error::ConnectionClosed => {
-                    println!("Websocket connection closed");
-                    break;
-                }
-                // std::io::ErrorKind::WouldBlock => {
-
-                // }
                 _ => {}
             },
         }
