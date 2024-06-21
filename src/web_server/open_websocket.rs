@@ -22,9 +22,13 @@ pub fn open_websocket(stream: &TcpStream) -> () {
             Err(e) => println!("watch error: {:?}", e),
         })
         .unwrap();
-    watcher
-        .watch(content_dir.as_path(), RecursiveMode::Recursive)
-        .unwrap();
+    let temp_root_dir = content_dir.parent().unwrap().parent().unwrap();
+    let templates_dir = temp_root_dir.join("templates");
+    let static_dir = temp_root_dir.join("static");
+
+    watcher.watch(&content_dir, RecursiveMode::Recursive).unwrap();
+    watcher.watch(&templates_dir, RecursiveMode::Recursive).unwrap();
+    watcher.watch(&static_dir, RecursiveMode::Recursive).unwrap();
 
     println!("Websocket opening...");
     loop {

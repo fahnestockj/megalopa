@@ -115,7 +115,7 @@ section {
   --lighter-gray: rgb(62, 62, 66);
 
   --off-white: rgba(245, 251, 239);
-  --off-white-a70: rgb(200, 200, 239, 0.70);
+  --off-white-a70: rgb(200, 200, 239, 0.7);
   --light-blue: rgb(99, 174, 199);
   --blue: rgb(0, 122, 204);
   --dark-blue: rgb(19, 15, 122);
@@ -247,6 +247,14 @@ h6,
   flex-grow: 1;
   max-width: calc(100% - 50px);
 }
+.my-1 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+.my-2 {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
 .mx-1 {
   margin-left: 1rem;
   margin-right: 1rem;
@@ -269,6 +277,9 @@ h6,
 }
 .m-1 {
   margin: 1rem;
+}
+.m-2 {
+  margin: 2rem;
 }
 
 .px-1 {
@@ -315,7 +326,7 @@ h6,
   stroke: var(--off-white-a70);
 }
 
-.headerNav {
+.header-nav {
   width: 100%;
   height: 20%;
   display: flex;
@@ -323,6 +334,106 @@ h6,
   flex-direction: row;
   align-items: center;
   background-color: var(--darker-gray);
+}
+.homepage-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+.homepage-container {
+  width: 40%;
+  height: fit-content;
+}
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: var(--gray);
+  border-radius: 10px;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+}
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.card-title {
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+}
+
+.firepit-img {
+  width: 200px;
+  height: 200px;
+  /* object-fit: contain; */
+  position: absolute;
+}
+.firepit {
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+.fire {
+  width: 200px;
+  height: 200px;
+  position: absolute;
+  bottom: 46.7%;
+  right: 5%;
+  display: none;
+}
+.firepit-shadow {
+  background: radial-gradient(circle, rgb(156, 74, 15), rgb(129, 14, 14));
+  background-size: 400%;
+  animation: shadow 20s infinite linear;
+  border-radius: 10px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  z-index: -2;
+  position: absolute;
+  filter: blur(20px);
+  display: none;
+}
+.flint {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  right: 20%;
+}
+.steel {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  right: 50%;
+}
+.flint-and-steel {
+  width: 100px;
+  height: 150px;
+  position: absolute;
+  right: 20%;
+  z-index: 2;
+  transition: width 0.5s ease-out;
+}
+#firepit-card:hover {
+  cursor: pointer;
+}
+#firepit-card:hover > .card-content > .firepit > .flint-and-steel {
+  width: 50px;
+}
+
+
+@keyframes shadow {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .h-full {
