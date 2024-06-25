@@ -2,15 +2,122 @@
 {% block head %}
 {{ super() }}
 <script>
-  function firepitCardHandleClick() {
+  // paricle system heavily inspired by https://css-tricks.com/adding-particle-effects-to-dom-elements-with-canvas/
+  const Particle = function () {
+    this.animationDuration = 5000 //ms
+    // Set the speed for our particle
+    this.speed = {
+      x: -1.5 + Math.random() * 3,
+      y: -1 + Math.random() * 3
+    };
+
+    // Size our particle
+    this.radius = 2 + Math.random() * 2;
+
+    // Set a max time to live for our particle
+    this.life = 1000 + Math.random() * 10;
+    this.remainingLife = this.life;
+
+    // This function will be called by our animation logic later on
+    this.draw = ctx => {
+      let p = this;
+
+      if (this.remainingLife > 0
+        && this.radius > 0) {
+        // Draw a circle at the current location
+        ctx.beginPath();
+        ctx.arc(p.startX, p.startY, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 163, 24, ${p.remainingLife / p.life})`;
+        ctx.shadowColor = "#FFA318";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.globalCompositeOperation = "lighter";
+        //add opacity
+        ctx.globalAlpha = p.speed.x + p.speed.y;
+
+        ctx.fill();
+
+        // Update the particle's location and life
+        p.remainingLife--;
+        p.radius -= 0.01;
+        p.startX += p.speed.x;
+        p.startY += p.speed.y;
+        p.speed.y += 0.05;
+
+      }
+    }
+  }
+
+
+
+  function firepitCardHandleClick(e) {
+    const firepitCard = document.getElementById("firepit-card");
     const firepitShadow = document.getElementById("firepit-shadow");
     const lightFirepit = document.getElementById("light-firepit");
     const darkFirepit = document.getElementById("dark-firepit");
     const fire = document.getElementById("fire");
     const flintAndSteel = document.getElementById("flint-and-steel");
+    const steel = document.getElementById("steel");
+    const firepitCanvas = document.getElementById("firepit-canvas");
+    const canvasCtx = firepitCanvas.getContext("2d");
+    const fireAnimation = document.getElementById("fire-animation");
+    const fireAnimationTransform = document.getElementById("fire-animation-transform");
+
+    if (fire.style.display === "block") {
+      return
+    }
+
+    steel.style.marginTop = "15px"
+    steel.style.transform = "rotate(30deg)"
+    setTimeout(() => {
+      steel.style.marginTop = "0px"
+      steel.style.transform = "rotate(0deg)"
+    }, 200)
+
+    const particles = [];
+    function createParticleAtPoint(x, y) {
+      let particle = new Particle();
+      particle.startX = x;
+      particle.startY = y;
+      particle.startTime = Date.now();
+
+      particles.push(particle);
+    }
+
+    function update() {
+      // Clear out the old particles
+      if (typeof canvasCtx !== "undefined") {
+        canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+
+      // Draw all of our particles in their new location
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].draw(canvasCtx);
+
+        // Simple way to clean up if the last particle is done animating
+        if (i === particles.length - 1) {
+          let percent = (Date.now() - particles[i].startTime) / particles[i].animationDuration[i];
+
+          if (percent > 1) {
+            particles = [];
+          }
+        }
+      }
+      // Animate performantly
+      window.requestAnimationFrame(update);
+    }
+    const numParticles = 20;
+
+    const rect = firepitCard.getBoundingClientRect();
+    const x = 150
+    const y = rect.height / 5;
+    for (let i = 0; i < numParticles; i++) {
+      createParticleAtPoint(x, y);
+    }
+    window.requestAnimationFrame(update);
 
     const strikeCount = flintAndSteel.getAttribute("strike-count");
-    console.log(strikeCount);
     if (!strikeCount) {
       flintAndSteel.setAttribute("strike-count", 1);
       return
@@ -18,24 +125,22 @@
       flintAndSteel.setAttribute("strike-count", parseInt(strikeCount) + 1);
       return
     }
-
-    // light fire
-
-    if (darkFirepit.style.display !== "none") {
+    if (strikeCount >= 3) {
+      // light fire
       firepitShadow.style.display = "block";
       lightFirepit.style.display = "block";
       darkFirepit.style.display = "none";
       fire.style.display = "block";
-      fire.pauseAnimations();
-      fire.unpauseAnimations();
       flintAndSteel.style.display = "none";
-    } else {
-      firepitShadow.style.display = "none";
-      lightFirepit.style.display = "none";
-      darkFirepit.style.display = "block";
-      fire.style.display = "none";
-      flintAndSteel.style.display = "block";
+      firepitCard.style.cursor = "default";
+      fireAnimation.endElement()
+      fireAnimationTransform.endElement()
+      fireAnimation.beginElement()
+      fireAnimationTransform.beginElement()
+      return
     }
+
+
   }
 </script>
 {% endblock head %}
@@ -68,7 +173,8 @@
 </div>
 <div class="homepage-row my-2">
   <div class="homepage-container">
-    <div id="firepit-card" class="card" onclick="firepitCardHandleClick()">
+    <div id="firepit-card" class="card" onclick="firepitCardHandleClick(event)">
+      <canvas id="firepit-canvas" class="firepit-canvas"></canvas>
       <div id="firepit-shadow" class="firepit-shadow"></div>
       <div class="card-content">
         <div class="firepit">
@@ -85,18 +191,14 @@
 
           <img class="firepit-img" id="dark-firepit"
             src="data:image/png;base64, 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" />
+          <!-- Fire animation came from Codepen! https://codepen.io/leimapapa/pen/oNRbNJP  -->
           <svg id="fire" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="fire">
             <defs>
               <filter id="turb" x="-100%" y="-100%" width="300%" height="300%">
                 <feTurbulence type="turbulence" baseFrequency="0.06" numOctaves="1" result="turbulence" seed="69" />
                 <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="35" />
               </filter>
-              <filter id="turb2" x="-100%" y="-100%" width="300%" height="300%">
-                <feTurbulence type="turbulence" baseFrequency="0.08" numOctaves="1" result="turbulence" seed="169" />
-                <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="35" />
-              </filter>
               <radialGradient id="grad" cx="50%" cy="100%">
-                <stop offset="0%" stop-color="blue" />
                 <stop offset="20%" stop-color="gold" />
                 <stop offset="60%" stop-color="gold" />
                 <stop offset="100%" stop-color="red" />
@@ -108,12 +210,11 @@
                 <animate id="fire-animation" attributeName="d" values="M70 200 h60 l-30 -90z; M70 7200 h60 l-30 -90z"
                   dur="100s" begin="0s" repeatCount="indefinite" />
               </path>
-              <animateTransform attributeName="transform" attributeType="XML" type="translate" values="0 0; 0 -7000"
-                dur="100s" repeatCount="indefinite" begin="0s" />
+              <animateTransform id="fire-animation-transform" attributeName="transform" attributeType="XML"
+                type="translate" values="0 0; 0 -7000" dur="100s" repeatCount="indefinite" begin="0s" />
             </g>
           </svg>
         </div>
-
       </div>
     </div>
   </div>

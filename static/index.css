@@ -368,8 +368,8 @@ h6,
 .firepit-img {
   width: 200px;
   height: 200px;
-  /* object-fit: contain; */
   position: absolute;
+  user-select: none;
 }
 .firepit {
   width: 200px;
@@ -385,9 +385,9 @@ h6,
   display: none;
 }
 .firepit-shadow {
-  background: radial-gradient(circle, rgb(156, 74, 15), rgb(129, 14, 14));
+  background: radial-gradient(circle, rgb(196, 100, 31), rgb(189, 23, 23));
   background-size: 400%;
-  animation: shadow 20s infinite linear;
+  animation: shadow 10s infinite linear;
   border-radius: 10px;
   width: calc(100% + 4px);
   height: calc(100% + 4px);
@@ -401,18 +401,21 @@ h6,
   height: 50px;
   position: absolute;
   right: 20%;
+  user-select: none;
 }
 .steel {
   width: 50px;
   height: 50px;
   position: absolute;
   right: 50%;
+  user-select: none;
 }
 .flint-and-steel {
   width: 100px;
-  height: 150px;
+  height: 100px;
   position: absolute;
-  right: 20%;
+  right: 25%;
+  top: 5%;
   z-index: 2;
   transition: width 0.5s ease-out;
 }
@@ -421,6 +424,16 @@ h6,
 }
 #firepit-card:hover > .card-content > .firepit > .flint-and-steel {
   width: 50px;
+}
+.firepit-canvas {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 100%;
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
 }
 
 
