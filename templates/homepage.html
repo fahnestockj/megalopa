@@ -4,7 +4,7 @@
 <script>
   // paricle system heavily inspired by https://css-tricks.com/adding-particle-effects-to-dom-elements-with-canvas/
   const Particle = function () {
-    this.animationDuration = 5000 //ms
+    this.animationDuration = 2000 //ms
     // Set the speed for our particle
     this.speed = {
       x: -1.5 + Math.random() * 3,
@@ -50,6 +50,7 @@
   }
 
 
+  let particles = [];
 
   function firepitCardHandleClick(e) {
     const firepitCard = document.getElementById("firepit-card");
@@ -75,7 +76,6 @@
       steel.style.transform = "rotate(0deg)"
     }, 200)
 
-    const particles = [];
     function createParticleAtPoint(x, y) {
       let particle = new Particle();
       particle.startX = x;
@@ -85,7 +85,10 @@
       particles.push(particle);
     }
 
-    function update() {
+    function update(timestamp) {
+      if (!particles.length) {
+        return
+      }
       // Clear out the old particles
       if (typeof canvasCtx !== "undefined") {
         canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -97,10 +100,10 @@
 
         // Simple way to clean up if the last particle is done animating
         if (i === particles.length - 1) {
-          let percent = (Date.now() - particles[i].startTime) / particles[i].animationDuration[i];
-
+          let percent = (Date.now() - particles[i].startTime) / particles[i].animationDuration;
           if (percent > 1) {
             particles = [];
+            return
           }
         }
       }
@@ -115,7 +118,10 @@
     for (let i = 0; i < numParticles; i++) {
       createParticleAtPoint(x, y);
     }
-    window.requestAnimationFrame(update);
+    // if particles already exist don't start another animation frame
+    if (particles.length === 20) {
+      window.requestAnimationFrame(update);
+    }
 
     const strikeCount = flintAndSteel.getAttribute("strike-count");
     if (!strikeCount) {
