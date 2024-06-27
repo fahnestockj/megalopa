@@ -3,7 +3,7 @@
 
 <head>
     {% block head %}
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <link rel="stylesheet" href="/index.css">
     </link>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,11 +29,11 @@
     </script>
 </head>
 
-<body class="color-scheme-dark">
-    <div>{% block content %}{% endblock content %}</div>
-    <div id="footer">
+<body class="color-scheme-dark h-vh ">
+    {% block content %}{% endblock content %}
+    <div id="footer" class="footer py-2">
         {% block footer %}
-        &copy; Copyright 2024.
+        &copy; Copyright 🦀 2024.
         {% endblock footer %}
     </div>
 </body>
