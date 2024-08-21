@@ -1,9 +1,9 @@
 #[derive(Debug, Eq, PartialEq)]
 pub struct SyntaxNode {
-    pub content: String,
-    pub text_type: NodeType,
+    pub content: Option<String>,
+    pub node_type: NodeType,
     pub children: Box<Vec<SyntaxNode>>,
-    pub parent: Box<SyntaxNode>,
+    pub parent: Option<Box<SyntaxNode>>,
 }
 
 #[derive(Eq, PartialEq, Debug)]
@@ -12,7 +12,9 @@ pub enum NodeType {
     Heading,
     Code,
     UnorderedList,
+    UnorderdListItem,
     OrderedList,
+    OrderedListItem,
     InlineQuote,
 }
 
@@ -22,10 +24,10 @@ trait ToHtml {
 
 impl ToHtml for SyntaxNode {
     fn to_html(self) -> String {
-        match self.text_type {
+        match self.node_type {
             NodeType::Text => {
                 // Nothing just return contents
-                self.content
+                self.content.expect("Text node should have content")
             }
             NodeType::Code => {
                 // wrap with <code> block
@@ -39,7 +41,7 @@ impl ToHtml for SyntaxNode {
             NodeType::Heading => {
                 // find heading num
                 let mut header_count = 0;
-                for char in self.content.chars() {
+                for char in self.content.expect("Heading should have content").chars() {
                     if char == '#' {
                         header_count += 1;
                     }
@@ -60,10 +62,69 @@ impl ToHtml for SyntaxNode {
                 wrapped_contents
             }
             NodeType::OrderedList => {
-                // this one will be tricky...
+                // wrap contents with <ol>
+                // children of this node should only be ordered list items
+                assert!(self
+                    .children
+                    .iter()
+                    .all(|child| { child.node_type == NodeType::OrderedListItem }));
+
+                let mut wrapped_contents = String::from("<ol>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</ol>");
+                wrapped_contents
             }
-            NodeType::UnorderedList => {}
-            NodeType::InlineQuote => {}
+            NodeType::UnorderedList => {
+                // same as OrderedList just <ul>
+                assert!(self
+                    .children
+                    .iter()
+                    .all(|child| { child.node_type == NodeType::UnorderdListItem }));
+
+                let mut wrapped_contents = String::from("<ul>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</ul>");
+                wrapped_contents
+            }
+            NodeType::UnorderdListItem | NodeType::OrderedListItem => {
+                // number is already removed so wrap with <li>
+                let mut wrapped_contents = String::from("<li>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</li>");
+                wrapped_contents
+            }
+            NodeType::InlineQuote => {
+                let mut wrapped_contents = String::from("<q>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</q>");
+                wrapped_contents
+            }
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn to_html_test() {
+        // test for basic node functionality
+        let node: SyntaxNode = SyntaxNode {
+            content: Some(String::from("# heading")),
+            children: Box::default(),
+            node_type: NodeType::Heading,
+            parent: None,
+        };
+        assert_eq!(node.to_html(), "<h1> heading</h1>");
     }
 }
