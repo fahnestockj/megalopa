@@ -49,7 +49,7 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn types_of_nodes() {
+    pub fn inline_code() {
         // test for basic node type identification
         let block: &str = "`Hello World`";
         let syntax_nodes = block_to_syntax_nodes(block);
@@ -60,6 +60,7 @@ mod tests {
             children: Box::new(vec![]),
             parent: None,
         };
+        dbg!(&syntax_nodes);
         assert_eq!(syntax_nodes, vec![mock]);
     }
 }

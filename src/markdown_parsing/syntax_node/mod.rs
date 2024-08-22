@@ -1,4 +1,4 @@
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct SyntaxNode {
     pub content: Option<String>,
     pub node_type: NodeType,
@@ -6,7 +6,7 @@ pub struct SyntaxNode {
     pub parent: Option<Box<SyntaxNode>>,
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum NodeType {
     Text,
     Heading,
@@ -51,7 +51,8 @@ impl ToHtml for SyntaxNode {
                 let mut header_tag = String::from("<h");
                 header_tag.push_str(&header_count.to_string());
                 header_tag.push_str(">");
-                let mut wrapped_contents = String::from("<h");
+                let mut wrapped_contents = header_tag.clone();
+
                 self.children
                     .iter()
                     .for_each(|child| wrapped_contents.push_str(&child.to_html()));
@@ -114,17 +115,27 @@ impl ToHtml for SyntaxNode {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
 
     #[test]
     pub fn to_html_test() {
         // test for basic node functionality
-        let node: SyntaxNode = SyntaxNode {
-            content: Some(String::from("# heading")),
-            children: Box::default(),
+        let mut node: SyntaxNode = SyntaxNode {
+            content: Some(String::from("#")),
+            children: Box::new(vec![]),
             node_type: NodeType::Heading,
             parent: None,
         };
-        assert_eq!(node.to_html(), "<h1> heading</h1>");
+
+        let child_text_node = SyntaxNode {
+            content: Some(String::from("heading")),
+            children: Box::default(),
+            node_type: NodeType::Text,
+            parent: Some(Box::new(node.clone())),
+        };
+        node.children.push(child_text_node);
+        assert_eq!(node.to_html(), "<h1>heading</h1>");
     }
 }
