@@ -1,11 +1,11 @@
 
 # Megalopa
 
-A static site generator built (mostly) from scratch!
+A static site generator built from scratch!
 
 Including:
 - A Markdown -> Html parser
-- A web server
+- A web server with live reload
 - A CLI (using clap)
 
 WIP:

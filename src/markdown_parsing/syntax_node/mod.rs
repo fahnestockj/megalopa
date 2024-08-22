@@ -3,7 +3,6 @@ pub struct SyntaxNode {
     pub content: Option<String>,
     pub node_type: NodeType,
     pub children: Box<Vec<SyntaxNode>>,
-    pub parent: Option<Box<SyntaxNode>>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -15,7 +14,7 @@ pub enum NodeType {
     UnorderdListItem,
     OrderedList,
     OrderedListItem,
-    InlineQuote,
+    Blockquote,
 }
 
 trait ToHtml {
@@ -100,7 +99,7 @@ impl ToHtml for SyntaxNode {
                 wrapped_contents.push_str("</li>");
                 wrapped_contents
             }
-            NodeType::InlineQuote => {
+            NodeType::Blockquote => {
                 let mut wrapped_contents = String::from("<q>");
                 self.children
                     .iter()
@@ -126,14 +125,12 @@ mod tests {
             content: Some(String::from("#")),
             children: Box::new(vec![]),
             node_type: NodeType::Heading,
-            parent: None,
         };
 
         let child_text_node = SyntaxNode {
             content: Some(String::from("heading")),
             children: Box::default(),
             node_type: NodeType::Text,
-            parent: Some(Box::new(node.clone())),
         };
         node.children.push(child_text_node);
         assert_eq!(node.to_html(), "<h1>heading</h1>");
