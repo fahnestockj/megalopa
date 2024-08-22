@@ -1,5 +1,3 @@
-use markdown::mdast::Node;
-
 use super::syntax_node::{NodeType, SyntaxNode};
 pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
     // this checks the relevant chars at the start of the block
