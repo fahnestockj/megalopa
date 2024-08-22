@@ -25,7 +25,10 @@ impl ToHtml for SyntaxNode {
         match self.node_type {
             NodeType::Text => {
                 // Nothing just return contents
-                self.content.as_ref().expect("Text node should have content").to_string()
+                self.content
+                    .as_ref()
+                    .expect("Text node should have content")
+                    .to_string()
             }
             NodeType::Code => {
                 // wrap with <code> block
@@ -39,7 +42,12 @@ impl ToHtml for SyntaxNode {
             NodeType::Heading => {
                 // find heading num
                 let mut header_count = 0;
-                for char in self.content.as_ref().expect("Heading should have content").chars() {
+                for char in self
+                    .content
+                    .as_ref()
+                    .expect("Heading should have content")
+                    .chars()
+                {
                     if char == '#' {
                         header_count += 1;
                     }
@@ -110,7 +118,6 @@ impl ToHtml for SyntaxNode {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::vec;
@@ -118,20 +125,52 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn to_html_test() {
-        // test for basic node functionality
-        let mut node: SyntaxNode = SyntaxNode {
+    pub fn heading_to_html() {
+        let node: SyntaxNode = SyntaxNode {
             content: Some(String::from("#")),
-            children: Box::new(vec![]),
+            children: Box::new(vec![SyntaxNode {
+                content: Some(String::from("heading")),
+                children: Box::default(),
+                node_type: NodeType::Text,
+            }]),
             node_type: NodeType::Heading,
         };
 
-        let child_text_node = SyntaxNode {
-            content: Some(String::from("heading")),
-            children: Box::default(),
-            node_type: NodeType::Text,
-        };
-        node.children.push(child_text_node);
         assert_eq!(node.to_html(), "<h1>heading</h1>");
+    }
+    #[test]
+    pub fn code_to_html() {
+        let node: SyntaxNode = SyntaxNode {
+            content: None,
+            children: Box::new(vec![SyntaxNode {
+                content: Some(String::from("code")),
+                children: Box::default(),
+                node_type: NodeType::Text,
+            }]),
+            node_type: NodeType::Code,
+        };
+
+        assert_eq!(node.to_html(), "<code>code</code>");
+    }
+
+    #[test]
+    pub fn list_to_html() {
+        let list_item_node = SyntaxNode {
+            content: None,
+            children: Box::new(vec![SyntaxNode {
+                content: Some(String::from("item content")),
+                children: Box::default(),
+                node_type: NodeType::Text,
+            }]),
+            node_type: NodeType::ListItem,
+        };
+
+        let node = SyntaxNode {
+            content: None,
+            children: Box::new(vec![list_item_node.clone(), list_item_node.clone()]),
+            node_type: NodeType::UnorderedList,
+        };
+
+        assert_eq!(node.to_html(), "<ul><li>item content</li><li>item content</li></ul>");
     }
 }
