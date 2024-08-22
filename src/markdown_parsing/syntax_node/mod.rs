@@ -11,9 +11,8 @@ pub enum NodeType {
     Heading,
     Code,
     UnorderedList,
-    UnorderdListItem,
+    ListItem,
     OrderedList,
-    OrderedListItem,
     Blockquote,
 }
 
@@ -67,7 +66,7 @@ impl ToHtml for SyntaxNode {
                 assert!(self
                     .children
                     .iter()
-                    .all(|child| { child.node_type == NodeType::OrderedListItem }));
+                    .all(|child| { child.node_type == NodeType::ListItem }));
 
                 let mut wrapped_contents = String::from("<ol>");
                 self.children
@@ -81,7 +80,7 @@ impl ToHtml for SyntaxNode {
                 assert!(self
                     .children
                     .iter()
-                    .all(|child| { child.node_type == NodeType::UnorderdListItem }));
+                    .all(|child| { child.node_type == NodeType::ListItem }));
 
                 let mut wrapped_contents = String::from("<ul>");
                 self.children
@@ -90,7 +89,7 @@ impl ToHtml for SyntaxNode {
                 wrapped_contents.push_str("</ul>");
                 wrapped_contents
             }
-            NodeType::UnorderdListItem | NodeType::OrderedListItem => {
+            NodeType::ListItem => {
                 // number is already removed so wrap with <li>
                 let mut wrapped_contents = String::from("<li>");
                 self.children

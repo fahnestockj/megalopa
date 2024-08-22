@@ -7,7 +7,7 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
     let block = block.trim();
     if block.starts_with("#") {
         // take the #s into the nodes content and make inline nodes children
-        let mut last_hashtag_idx: usize;
+        let mut last_hashtag_idx: usize = 0;
         for (idx, char) in block.char_indices() {
             if char == '#' {
                 last_hashtag_idx = idx;
@@ -37,10 +37,49 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
         };
         return vec![parent_node];
     } else if block.starts_with("-") {
+        // break into list items and call str_to_inline_syntax_node on each
+        let mut list_item_nodes: Vec<SyntaxNode> = vec![];
+        for list_item in block.lines() {
+            let rest_of_list_item = list_item.strip_prefix("-").unwrap().trim();
+            let children_of_line_item = str_to_inline_syntax_node(rest_of_list_item);
+            
+            let list_item_node = SyntaxNode {
+                content: None,
+                node_type: NodeType::ListItem,
+                children: Box::new(children_of_line_item),
+            };
+            list_item_nodes.push(list_item_node)
+        }
+
+        let unordered_list_node = SyntaxNode {
+            content: None,
+            children: Box::new(list_item_nodes),
+            node_type: NodeType::UnorderedList,
+        };
+        return vec![unordered_list_node];
+
     } else if block.starts_with("1.") {
+        let mut list_item_nodes: Vec<SyntaxNode> = vec![];
+        for list_item in block.lines() {
+            let rest_of_list_item = list_item.trim()[1..].trim();
+            let children_of_line_item = str_to_inline_syntax_node(rest_of_list_item);
+            
+            let list_item_node = SyntaxNode {
+                content: None,
+                node_type: NodeType::ListItem,
+                children: Box::new(children_of_line_item),
+            };
+            list_item_nodes.push(list_item_node)
+        }
+
+        let ordered_list_node = SyntaxNode {
+            content: None,
+            children: Box::new(list_item_nodes),
+            node_type: NodeType::OrderedList,
+        };
+        return vec![ordered_list_node];
     } else {
-        // text node but
-        // still check for inline nodes
+        return str_to_inline_syntax_node(block);
     }
 }
 
@@ -64,7 +103,7 @@ fn str_to_inline_syntax_node(str: &str) -> Vec<SyntaxNode> {
                     .expect("No closing ` char found");
                 // slice out the ` chars
                 let sub_block = &str[starting_idx..*closing_char_idx];
-                let children = block_to_syntax_nodes(sub_block);
+                let children = str_to_inline_syntax_node(sub_block);
                 let node = SyntaxNode {
                     node_type: NodeType::Code,
                     children: Box::new(children),
@@ -95,6 +134,6 @@ mod tests {
             node_type: NodeType::Code,
             children: Box::new(vec![]),
         };
-        assert_eq!(syntax_nodes[0], mock);
+        assert_eq!(syntax_nodes, mock);
     }
 }
