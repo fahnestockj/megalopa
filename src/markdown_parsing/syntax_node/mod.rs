@@ -19,29 +19,29 @@ pub enum NodeType {
 }
 
 trait ToHtml {
-    fn to_html(self) -> String;
+    fn to_html(&self) -> String;
 }
 
 impl ToHtml for SyntaxNode {
-    fn to_html(self) -> String {
+    fn to_html(&self) -> String {
         match self.node_type {
             NodeType::Text => {
                 // Nothing just return contents
-                self.content.expect("Text node should have content")
+                self.content.as_ref().expect("Text node should have content").to_string()
             }
             NodeType::Code => {
                 // wrap with <code> block
                 let mut wrapped_contents = String::from("<code>");
                 self.children
                     .iter()
-                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                    .for_each(|child| wrapped_contents.push_str(child.to_html().as_str()));
                 wrapped_contents.push_str("</code>");
                 wrapped_contents
             }
             NodeType::Heading => {
                 // find heading num
                 let mut header_count = 0;
-                for char in self.content.expect("Heading should have content").chars() {
+                for char in self.content.as_ref().expect("Heading should have content").chars() {
                     if char == '#' {
                         header_count += 1;
                     }
