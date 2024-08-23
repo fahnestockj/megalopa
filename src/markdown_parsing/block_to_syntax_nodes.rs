@@ -12,7 +12,6 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
                 break;
             }
         }
-        assert!(last_hashtag_idx > 0);
         assert!(last_hashtag_idx < 7);
 
         let rest_of_block = &block[(last_hashtag_idx + 1)..].trim();
@@ -80,10 +79,9 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
 
 // recursively builds the syntax nodes contained within a string
 // for example bold node with child italic node with child text node
-fn str_to_inline_syntax_node(str: &str) -> Vec<SyntaxNode> {
+fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
     let mut nodes: Vec<SyntaxNode> = vec![];
-    let str = str.trim();
-    let mut char_iter = str.char_indices();
+    let mut char_iter = string.char_indices();
 
     let mut text_node_contents = String::new();
     while let Some((idx, char)) = char_iter.next() {
@@ -101,13 +99,21 @@ fn str_to_inline_syntax_node(str: &str) -> Vec<SyntaxNode> {
 
                 // pull slice till closing tag
                 // create syntax node and recurse on child string slice
-                let starting_idx = idx + 1;
-                let closing_char_idx = &str[starting_idx..]
+                println!("STRING= '{}'", &string);
+                println!("CHAR: {} IDX: {}", &char, &idx);
+                let idx_after_first_backtick = idx + 1;
+                println!("Searching for offset_to_next_backtick in str = {}", &string[idx_after_first_backtick..]);
+                let offset_to_next_backtick = &string[idx_after_first_backtick..]
                     .chars()
                     .position(|c| c == '`')
                     .expect("No closing ` char found");
+                println!("offset_to_next_backtick: {}", offset_to_next_backtick);
+                let idx_after_next_backtick =
+                    idx_after_first_backtick + offset_to_next_backtick;
+
                 // slice out the ` chars
-                let sub_str = &str[starting_idx..(*closing_char_idx + 1)];
+                let sub_str = &string[idx_after_first_backtick..(idx_after_next_backtick)];
+                println!("sub_str: '{}'", sub_str);
                 let children = str_to_inline_syntax_node(sub_str);
                 let node = SyntaxNode {
                     node_type: NodeType::Code,
@@ -116,7 +122,7 @@ fn str_to_inline_syntax_node(str: &str) -> Vec<SyntaxNode> {
                 };
                 nodes.push(node);
                 // skip chars till the closing_char_idx
-                char_iter.nth(*closing_char_idx);
+                char_iter.nth(*offset_to_next_backtick);
             }
             _ => text_node_contents.push(char),
         }
@@ -135,7 +141,13 @@ fn str_to_inline_syntax_node(str: &str) -> Vec<SyntaxNode> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    pub fn testing_backticks() {
+        let backticks = "why `god` why `god` ";
+        let nodes = str_to_inline_syntax_node(&backticks);
+        assert_eq!(nodes.iter().count(), 5)
 
+    }
     #[test]
     pub fn inline_code() {
         // test for basic node type identification
@@ -161,6 +173,40 @@ mod tests {
             node_type: NodeType::Heading,
         };
         assert_eq!(header_nodes[0], fixture_header_node);
+    }
+    #[test]
+    pub fn basic_header() {
+        let header: &str = "# Hello World";
+        let header_nodes = block_to_syntax_nodes(header);
+
+        let fixture = SyntaxNode {
+            content: Some(String::from("#")),
+            node_type: NodeType::Heading,
+            children: Box::new(vec![SyntaxNode {
+                node_type: NodeType::Text,
+                children: Box::new(vec![]),
+                content: Some(String::from("Hello World")),
+            }]),
+        };
+        assert_eq!(header_nodes[0], fixture);
+    }
+
+    #[test]
+    pub fn double_inline_code() {
+        let header: &str = "`code` `code`";
+        let header_nodes = block_to_syntax_nodes(header);
+        assert_eq!(3, header_nodes.iter().count());
+
+        let another = "nesting `code` in a `block`";
+        let header_nodes = block_to_syntax_nodes(another);
+        assert_eq!(4, header_nodes.iter().count());
+    }
+
+    #[test]
+    pub fn code_in_header() {
+        let header: &str = "## `code` chars inbetween `code`";
+        let header_nodes = block_to_syntax_nodes(header);
+        assert!(header_nodes.iter().count() == 1);
     }
 
     #[test]

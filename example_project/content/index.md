@@ -12,3 +12,5 @@
 
 > # heading in inline block
 
+
+nesting `code` in a `block`
