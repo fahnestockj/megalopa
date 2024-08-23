@@ -16,7 +16,7 @@ pub enum NodeType {
     Blockquote,
 }
 
-trait ToHtml {
+pub trait ToHtml {
     fn to_html(&self) -> String;
 }
 
