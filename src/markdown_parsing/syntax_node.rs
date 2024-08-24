@@ -107,11 +107,11 @@ impl ToHtml for SyntaxNode {
                 wrapped_contents
             }
             NodeType::Blockquote => {
-                let mut wrapped_contents = String::from("<q>");
+                let mut wrapped_contents = String::from("<blockquote>");
                 self.children
                     .iter()
                     .for_each(|child| wrapped_contents.push_str(&child.to_html()));
-                wrapped_contents.push_str("</q>");
+                wrapped_contents.push_str("</blockquote>");
                 wrapped_contents
             }
         }

@@ -99,21 +99,16 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
 
                 // pull slice till closing tag
                 // create syntax node and recurse on child string slice
-                println!("STRING= '{}'", &string);
-                println!("CHAR: {} IDX: {}", &char, &idx);
                 let idx_after_first_backtick = idx + 1;
-                println!("Searching for offset_to_next_backtick in str = {}", &string[idx_after_first_backtick..]);
                 let offset_to_next_backtick = &string[idx_after_first_backtick..]
                     .chars()
                     .position(|c| c == '`')
                     .expect("No closing ` char found");
-                println!("offset_to_next_backtick: {}", offset_to_next_backtick);
                 let idx_after_next_backtick =
                     idx_after_first_backtick + offset_to_next_backtick;
 
                 // slice out the ` chars
                 let sub_str = &string[idx_after_first_backtick..(idx_after_next_backtick)];
-                println!("sub_str: '{}'", sub_str);
                 let children = str_to_inline_syntax_node(sub_str);
                 let node = SyntaxNode {
                     node_type: NodeType::Code,
