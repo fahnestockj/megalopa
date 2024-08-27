@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use block_to_syntax_nodes::block_to_syntax_nodes;
 use md_to_blocks::md_to_blocks;
 use syntax_node::{SyntaxNode, ToHtml};
@@ -5,6 +7,27 @@ use syntax_node::{SyntaxNode, ToHtml};
 mod block_to_syntax_nodes;
 mod md_to_blocks;
 mod syntax_node;
+
+pub fn parse_frontmatter(md_content: &str) -> Option<String> {
+    let mut lines_itr = md_content.lines();
+    let mut o_frontmatter: Option<String> = None;
+    if let Some(first_line) = lines_itr.next() {
+        if first_line.trim().eq("---") {
+            while let Some(frontmatter_line) = lines_itr.next() {
+                if frontmatter_line.trim().eq("---") {
+                    break;
+                } else {
+                    if let Some(frontmatter) = o_frontmatter {
+                        o_frontmatter = Some(format!("{}\n{}", frontmatter, frontmatter_line));
+                    } else {
+                        o_frontmatter = Some(String::from(frontmatter_line));
+                    }
+                }
+            }
+        }
+    }
+    o_frontmatter
+}
 
 pub fn parse_markdown(md_content: &str) -> String {
     let mut blocks = md_to_blocks(md_content);

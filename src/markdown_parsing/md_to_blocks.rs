@@ -3,7 +3,19 @@ pub fn md_to_blocks(md_file: &str) -> Vec<String> {
 
     let mut lines_itr = md_file.lines();
     while let Some(mut line) = lines_itr.next() {
-        //TODO: this got messy bc iterators can't go backwards - rewrite without iterators
+        if line.trim().starts_with("---") {
+            //skip frontmatter
+            while let Some(mut line) = lines_itr.next() {
+                if line.trim().starts_with("---") {
+                    break;
+                }
+            }
+            line = lines_itr
+                .next()
+                .expect("Md file is empty other than frontmatter");
+        }
+
+        // TODO: cleanup
         loop {
             let mut list_block = String::new();
             if line.trim().starts_with("- ") {
@@ -57,8 +69,14 @@ mod tests {
         let md = "# hi\nhello\n- list item\n- list item\nnot\n1. list item\n2. list item";
         let blocks = md_to_blocks(md);
 
-        let mut str_fixture = vec!["# hi", "hello", "- list item\n- list item", "1. list item\n2. list item"];
-        let string_fixture: Vec<String> = str_fixture.iter_mut().map(|str| str.to_string()).collect();
+        let mut str_fixture = vec![
+            "# hi",
+            "hello",
+            "- list item\n- list item",
+            "1. list item\n2. list item",
+        ];
+        let string_fixture: Vec<String> =
+            str_fixture.iter_mut().map(|str| str.to_string()).collect();
 
         assert_eq!(blocks, string_fixture);
     }

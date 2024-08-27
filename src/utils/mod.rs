@@ -13,7 +13,7 @@ pub fn get_project_dir() -> path::PathBuf {
     match fs::read_to_string(config_file_path) {
         Ok(_) => {}
         Err(_) => {
-            panic!("Couldn't find your config file, are you in the project's dir?")
+            panic!("Couldn't find your config file, are you in the project's root dir?")
         }
     };
 
@@ -32,6 +32,6 @@ pub fn read_config(project_dir: &path::PathBuf) -> Config {
         let config: Config = serde_yaml::from_str(&yaml_str).unwrap();
         config
     } else {
-        panic!("Couldn't find your config file, are you in the project's dir?")
+        panic!("Couldn't find your config file, are you in the project's root dir?")
     }
 }

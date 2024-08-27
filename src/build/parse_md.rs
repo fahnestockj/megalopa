@@ -3,6 +3,8 @@ use serde_yaml;
 use std::fs;
 use std::path::{self, PathBuf};
 
+use crate::markdown_parsing::parse_frontmatter;
+
 use super::path_utils::get_relative_file_path_for_routing;
 
 #[derive(Debug, Serialize)]
@@ -16,18 +18,14 @@ pub struct MdContentFileFrontmatter {
 }
 /// Parses frontmatter as Yaml for the given generic schema
 pub fn parse_frontmatter_from_md<T: for<'a> serde::Deserialize<'a>>(
-    f_str: &String,
+    md_str: &str,
 ) -> Result<T, serde_yaml::Error> {
-    let options = markdown::ParseOptions {
-        constructs: markdown::Constructs {
-            frontmatter: true,
-            ..markdown::Constructs::default()
-        },
-        ..markdown::ParseOptions::default()
-    };
-    let root_node = &markdown::to_mdast(&f_str, &options).unwrap();
-    let yaml_str = &root_node.children().unwrap()[0].to_string();
-    serde_yaml::from_str::<T>(&yaml_str)
+    let o_frontmatter = parse_frontmatter(md_str);
+    if let Some(frontmatter) = o_frontmatter {
+        serde_yaml::from_str::<T>(&frontmatter)
+    } else {
+        serde_yaml::from_str("")
+    }
 }
 
 /// defaults to the file name as a title if one isn't found
