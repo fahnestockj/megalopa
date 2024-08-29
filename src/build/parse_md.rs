@@ -77,22 +77,12 @@ pub fn parse_index_f_metadata(dir_path: &path::PathBuf) -> IndexFileMetadata {
 
 #[cfg(test)]
 mod tests {
-    use markdown::{Constructs, ParseOptions};
-
-    // use super::*;
+    use super::*;
 
     #[test]
     pub fn md_parse() {
         let file_str = "---\ntitle: Hello World\ntest: true\n---\n\n# heading 1\n## heading 2\n\ncontent content woo\n";
-        let options = ParseOptions {
-            constructs: Constructs {
-                frontmatter: true,
-                ..Constructs::default()
-            },
-            ..ParseOptions::default()
-        };
-        let ast = markdown::to_mdast(&file_str, &options).unwrap();
-        let first_node = &ast.children().unwrap()[0];
-        assert_eq!(first_node.to_string(), "title: Hello World\ntest: true")
+        let frontmatter = parse_frontmatter_from_md::<MdContentFileFrontmatter>(&file_str).unwrap();
+        assert_eq!(frontmatter.title.unwrap(), "Hello World")
     }
 }

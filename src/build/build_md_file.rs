@@ -1,6 +1,6 @@
 use std::{path, fs, io};
 use tera::Tera;
-use crate::{build::path_utils::{get_relative_file_path, get_relative_file_path_for_routing}, utils::{get_project_dir, read_config}};
+use crate::{build::path_utils::{get_relative_file_path, get_relative_file_path_for_routing}, markdown_parsing::parse_markdown, utils::{get_project_dir, read_config}};
 use super::parse_md::{ContentFileMetadata, IndexFileMetadata};
 
 /// md -> html content -> injected into template
@@ -21,18 +21,7 @@ pub fn build_md_file(
 
     let md_str = fs::read_to_string(file_path.clone())?;
 
-    let options = markdown::Options {
-        parse: markdown::ParseOptions {
-            constructs: markdown::Constructs {
-                frontmatter: true,
-                ..markdown::Constructs::default()
-            },
-            ..markdown::ParseOptions::default()
-        },
-        ..markdown::Options::default()
-    };
-
-    let html_contents = markdown::to_html_with_options(&md_str, &options).unwrap();
+    let html_contents = parse_markdown(&md_str);
 
     let mut context = tera::Context::new();
     context.insert("content", &html_contents);

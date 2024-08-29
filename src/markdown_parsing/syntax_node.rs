@@ -85,10 +85,10 @@ impl ToHtml for SyntaxNode {
             }
             NodeType::UnorderedList => {
                 // same as OrderedList just <ul>
-                assert!(self
-                    .children
-                    .iter()
-                    .all(|child| { child.node_type == NodeType::ListItem }));
+                assert!(self.children.iter().all(|child| {
+                    child.node_type == NodeType::ListItem
+                        || child.node_type == NodeType::UnorderedList
+                }));
 
                 let mut wrapped_contents = String::from("<ul>");
                 self.children
@@ -171,6 +171,9 @@ mod tests {
             node_type: NodeType::UnorderedList,
         };
 
-        assert_eq!(node.to_html(), "<ul><li>item content</li><li>item content</li></ul>");
+        assert_eq!(
+            node.to_html(),
+            "<ul><li>item content</li><li>item content</li></ul>"
+        );
     }
 }

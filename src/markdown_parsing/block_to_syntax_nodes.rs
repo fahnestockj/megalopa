@@ -1,7 +1,6 @@
 use super::syntax_node::{NodeType, SyntaxNode};
 pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
     // this checks the relevant chars at the start of the block
-    let block = block.trim();
     if block.starts_with("#") {
         // take the #s into the nodes content and make inline nodes children
         let mut last_hashtag_idx: usize = 0;
@@ -22,8 +21,8 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
             children: Box::new(child_nodes),
         };
         return vec![parent_node];
-    } else if block.starts_with(">") {
-        let rest_of_block = block.strip_prefix('>').unwrap();
+    } else if block.trim().starts_with(">") {
+        let rest_of_block = block.trim_start().strip_prefix('>').unwrap();
         let child_nodes = str_to_inline_syntax_node(rest_of_block);
         let parent_node = SyntaxNode {
             node_type: NodeType::Blockquote,
@@ -31,19 +30,39 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
             children: Box::new(child_nodes),
         };
         return vec![parent_node];
-    } else if block.starts_with("-") {
+    } else if block.trim().starts_with("-") {
         // break into list items and call str_to_inline_syntax_node on each
         let mut list_item_nodes: Vec<SyntaxNode> = vec![];
         for list_item in block.lines() {
-            let rest_of_list_item = list_item.trim().strip_prefix("-").unwrap().trim();
+            // If there is whitespace in front of the list item then nest the list
+            let is_nested = list_item.starts_with(" ");
+            let rest_of_list_item = list_item
+                .trim_start()
+                .strip_prefix("-")
+                .unwrap()
+                .trim_start();
             let children_of_line_item = str_to_inline_syntax_node(rest_of_list_item);
 
-            let list_item_node = SyntaxNode {
-                content: None,
-                node_type: NodeType::ListItem,
-                children: Box::new(children_of_line_item),
-            };
-            list_item_nodes.push(list_item_node)
+            if is_nested {
+                let list_item_node = SyntaxNode {
+                    content: None,
+                    node_type: NodeType::ListItem,
+                    children: Box::new(children_of_line_item),
+                };
+                let nested_list = SyntaxNode {
+                    content: None,
+                    children: Box::new(vec![list_item_node]),
+                    node_type: NodeType::UnorderedList,
+                };
+                list_item_nodes.push(nested_list)
+            } else {
+                let list_item_node = SyntaxNode {
+                    content: None,
+                    node_type: NodeType::ListItem,
+                    children: Box::new(children_of_line_item),
+                };
+                list_item_nodes.push(list_item_node)
+            }
         }
 
         let unordered_list_node = SyntaxNode {
@@ -52,7 +71,7 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
             node_type: NodeType::UnorderedList,
         };
         return vec![unordered_list_node];
-    } else if block.starts_with("1.") {
+    } else if block.trim().starts_with("1.") {
         let mut list_item_nodes: Vec<SyntaxNode> = vec![];
         for list_item in block.lines() {
             let rest_of_list_item = list_item.trim()[2..].trim();
@@ -104,8 +123,7 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                     .chars()
                     .position(|c| c == '`')
                     .expect("No closing ` char found");
-                let idx_after_next_backtick =
-                    idx_after_first_backtick + offset_to_next_backtick;
+                let idx_after_next_backtick = idx_after_first_backtick + offset_to_next_backtick;
 
                 // slice out the ` chars
                 let sub_str = &string[idx_after_first_backtick..(idx_after_next_backtick)];
@@ -141,7 +159,6 @@ mod tests {
         let backticks = "why `god` why `god` ";
         let nodes = str_to_inline_syntax_node(&backticks);
         assert_eq!(nodes.iter().count(), 5)
-
     }
     #[test]
     pub fn inline_code() {
@@ -223,7 +240,7 @@ mod tests {
     }
     #[test]
     pub fn lists() {
-        let unordered_block = " - another list item\n - another list item\n - another list item";
+        let unordered_block = "- another list item\n- another list item\n- another list item";
         let unordered_nodes = block_to_syntax_nodes(unordered_block);
         let list_item_node = SyntaxNode {
             children: Box::new(vec![SyntaxNode {
@@ -247,7 +264,7 @@ mod tests {
 
         assert_eq!(unordered_nodes[0], unordered_list_fixture);
 
-        let ordered_block = " 1. another list item\n 2. another list item\n 3. another list item";
+        let ordered_block = "1. another list item\n2. another list item\n3. another list item";
         let ordered_nodes = block_to_syntax_nodes(ordered_block);
 
         let ordered_list_fixture = SyntaxNode {
@@ -260,5 +277,38 @@ mod tests {
             node_type: NodeType::OrderedList,
         };
         assert_eq!(ordered_nodes[0], ordered_list_fixture);
+    }
+
+    #[test]
+    pub fn nested_list() {
+        let unordered_block = "- another list item\n - another list item\n- another list item";
+        let unordered_nodes = block_to_syntax_nodes(unordered_block);
+        let list_item_node = SyntaxNode {
+            children: Box::new(vec![SyntaxNode {
+                children: Box::new(vec![]),
+                content: Some(String::from("another list item")),
+                node_type: NodeType::Text,
+            }]),
+            node_type: NodeType::ListItem,
+            content: None,
+        };
+
+        let nested_list_node = SyntaxNode {
+            children: Box::new(vec![list_item_node.clone()]),
+            node_type: NodeType::UnorderedList,
+            content: None,
+        };
+
+        let unordered_list_fixture = SyntaxNode {
+            content: None,
+            children: Box::new(vec![
+                list_item_node.clone(),
+                nested_list_node.clone(),
+                list_item_node.clone(),
+            ]),
+            node_type: NodeType::UnorderedList,
+        };
+
+        assert_eq!(unordered_nodes[0], unordered_list_fixture);
     }
 }

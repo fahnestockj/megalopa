@@ -2,11 +2,12 @@
 content_name: example-content
 ---
  # Hi from a content index file
-  testladkfjl
+- a list item
+- anoth
 
-
-
-  Some content
+1. another
+2. list
+not herer
 
 
 

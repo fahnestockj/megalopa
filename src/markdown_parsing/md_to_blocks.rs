@@ -1,11 +1,16 @@
+use regex;
 pub fn md_to_blocks(md_file: &str) -> Vec<String> {
     let mut blocks: Vec<String> = vec![];
 
+    let mut unordered_list_block = String::new();
+    let mut ordered_list_block = String::new();
+    let ordered_list_regex = regex::Regex::new(r"^[1-9][1-9]?\.").unwrap();
+
     let mut lines_itr = md_file.lines();
     while let Some(mut line) = lines_itr.next() {
-        if line.trim().starts_with("---") {
+        if line.starts_with("---") && blocks.len() == 0 {
             //skip frontmatter
-            while let Some(mut line) = lines_itr.next() {
+            while let Some(line) = lines_itr.next() {
                 if line.trim().starts_with("---") {
                     break;
                 }
@@ -15,48 +20,56 @@ pub fn md_to_blocks(md_file: &str) -> Vec<String> {
                 .expect("Md file is empty other than frontmatter");
         }
 
-        // TODO: cleanup
-        loop {
-            let mut list_block = String::new();
-            if line.trim().starts_with("- ") {
-                list_block = String::from(line);
-                while let Some(nested_line) = lines_itr.next() {
-                    if nested_line.trim().starts_with("- ") {
-                        list_block.push_str("\n");
-                        list_block.push_str(nested_line);
-                    } else {
-                        line = nested_line;
-                        break;
-                    }
-                }
-                blocks.push(list_block);
-                list_block = String::new();
-            } else if line.trim().starts_with("1. ") {
-                list_block = String::from(line);
-                let mut ordered_list_num = 2;
-                while let Some(nested_line) = lines_itr.next() {
-                    let prefix = format!("{}.", ordered_list_num);
-                    if nested_line.trim().starts_with(&prefix) {
-                        list_block.push_str("\n");
-                        list_block.push_str(nested_line);
-                        ordered_list_num += 1;
-                    } else {
-                        line = nested_line;
-                        break;
-                    }
-                }
-                blocks.push(list_block);
-                list_block = String::new();
-            } else {
-                blocks.push(String::from(line));
-            }
+        // We ONLY add blocks when
+        // 1. We find a text block we add it right away (and any existing list blocks which get cleared)
+        // 2. We find a list block that's new! Then if the other type of list exists we add it as a block and clear the var
 
-            if list_block.chars().count() == 0 {
-                break;
+        if line.trim().starts_with("- ") {
+            if !unordered_list_block.is_empty() {
+                unordered_list_block.push_str(format!("\n{}", line).as_str());
+            } else {
+                // new list! check for an existing ordered list and push it
+                if !ordered_list_block.is_empty() {
+                    blocks.push(ordered_list_block.clone());
+                    ordered_list_block.clear();
+                }
+                unordered_list_block = line.to_string();
             }
         }
-    }
+        // this needs to be number agnostic
+        else if ordered_list_regex.is_match(line.trim()) {
+            if !ordered_list_block.is_empty() {
+                ordered_list_block.push_str(format!("\n{}", line).as_str());
+            } else {
+                // new list! check for an existing unordered list and push it
+                if !unordered_list_block.is_empty() {
+                    blocks.push(unordered_list_block.clone());
+                    unordered_list_block.clear();
+                }
+                ordered_list_block = line.to_string();
+            }
+        } else {
+            // regular text block
+            // check if a list exists and needs to be pushed
+            if !unordered_list_block.is_empty() {
+                blocks.push(unordered_list_block.clone());
+                unordered_list_block.clear();
+            }
 
+            if !ordered_list_block.is_empty() {
+                blocks.push(ordered_list_block.clone());
+                ordered_list_block.clear();
+            }
+            blocks.push(line.to_string());
+        }
+    }
+    // check for remaining blocks
+    if !unordered_list_block.is_empty() {
+        blocks.push(unordered_list_block.clone())
+    }
+    if !ordered_list_block.is_empty() {
+        blocks.push(ordered_list_block.clone())
+    }
     blocks
 }
 
@@ -73,6 +86,7 @@ mod tests {
             "# hi",
             "hello",
             "- list item\n- list item",
+            "not",
             "1. list item\n2. list item",
         ];
         let string_fixture: Vec<String> =
