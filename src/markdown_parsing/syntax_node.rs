@@ -156,7 +156,7 @@ impl ToHtml for SyntaxNode {
 
                 let src_prop = format!("src=\"{}\"", image_alt_vec[0]);
                 let alt_prop = format!("alt=\"{}\"", image_alt_vec[1]);
-                let rest_of_img_tag = format!(" {} {} ></img>", src_prop, alt_prop);
+                let rest_of_img_tag = format!(" {} {}></img>", src_prop, alt_prop);
 
                 wrapped_contents.push_str(&rest_of_img_tag);
                 wrapped_contents
@@ -216,7 +216,54 @@ mod tests {
 
         assert_eq!(node.to_html(), "<code>code</code>");
     }
+    #[test]
+    pub fn bold_to_html() {
+        let node: SyntaxNode = SyntaxNode {
+            content: None,
+            children: Box::new(vec![SyntaxNode {
+                content: Some(String::from("bold")),
+                children: Box::default(),
+                node_type: NodeType::Text,
+            }]),
+            node_type: NodeType::Bold,
+        };
 
+        assert_eq!(node.to_html(), "<strong>bold</strong>");
+    }
+    #[test]
+    pub fn italic_to_html() {
+        let node: SyntaxNode = SyntaxNode {
+            content: None,
+            children: Box::new(vec![SyntaxNode {
+                content: Some(String::from("italic")),
+                children: Box::default(),
+                node_type: NodeType::Text,
+            }]),
+            node_type: NodeType::Italic,
+        };
+
+        assert_eq!(node.to_html(), "<i>italic</i>");
+    }
+    #[test]
+    pub fn link_to_html() {
+        let node: SyntaxNode = SyntaxNode {
+            content: Some(String::from("/content | content")),
+            children: Box::new(vec![]),
+            node_type: NodeType::Link,
+        };
+
+        assert_eq!(node.to_html(), "<a href=\"/content\">content</a>");
+    }
+    #[test]
+    pub fn image_to_html() {
+        let node: SyntaxNode = SyntaxNode {
+            content: Some(String::from("/img.jpg | image")),
+            children: Box::new(vec![]),
+            node_type: NodeType::Image,
+        };
+
+        assert_eq!(node.to_html(), "<img src=\"/img.jpg\" alt=\"image\"></img>");
+    }
     #[test]
     pub fn list_to_html() {
         let list_item_node = SyntaxNode {
