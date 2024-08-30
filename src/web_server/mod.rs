@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use std::{self, fs};
 
 pub fn start_dev_server(port: u16) {
-    build();
+    build(false);
     let mut addr = "127.0.0.1:".to_owned();
     addr.push_str(&port.to_string());
 

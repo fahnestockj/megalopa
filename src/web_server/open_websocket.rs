@@ -15,7 +15,7 @@ pub fn open_websocket(stream: &TcpStream) -> () {
         notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| match res {
             Ok(event) => {
                 if event.kind.is_modify() {
-                    build::build();
+                    build::build(false);
                     tx.send(Message::FileChanged).unwrap();
                 }
             }

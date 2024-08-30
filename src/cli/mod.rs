@@ -25,7 +25,10 @@ pub enum Command {
         port: u16,
     },
     /// Build your md files => html files
-    Build {},
+    Build {
+         #[arg(default_value_t = false)]
+         empty_out_dir: bool,
+    },
     /// Initialize a new project (in cwd)
     Init {
         project_name: String

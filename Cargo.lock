@@ -665,7 +665,6 @@ dependencies = [
  "notify",
  "regex",
  "serde",
- "serde_json",
  "serde_yaml",
  "slug",
  "tera",

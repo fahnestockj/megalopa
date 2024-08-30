@@ -15,6 +15,10 @@ pub enum NodeType {
     OrderedList,
     Blockquote,
     Div,
+    Bold,
+    Italic,
+    Image,
+    Link,
 }
 
 pub trait ToHtml {
@@ -24,12 +28,11 @@ pub trait ToHtml {
 impl ToHtml for SyntaxNode {
     fn to_html(&self) -> String {
         match self.node_type {
-            NodeType::Text => {
-                self.content
-                    .as_ref()
-                    .expect("Text node should have content")
-                    .to_string()
-            }
+            NodeType::Text => self
+                .content
+                .as_ref()
+                .expect("Text node should have content")
+                .to_string(),
             NodeType::Code => {
                 // wrap with <code> block
                 let mut wrapped_contents = String::from("<code>");
@@ -37,6 +40,22 @@ impl ToHtml for SyntaxNode {
                     .iter()
                     .for_each(|child| wrapped_contents.push_str(child.to_html().as_str()));
                 wrapped_contents.push_str("</code>");
+                wrapped_contents
+            }
+            NodeType::Bold => {
+                let mut wrapped_contents = String::from("<strong>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</strong>");
+                wrapped_contents
+            }
+            NodeType::Italic => {
+                let mut wrapped_contents = String::from("<i>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</i>");
                 wrapped_contents
             }
             NodeType::Heading => {
@@ -120,6 +139,43 @@ impl ToHtml for SyntaxNode {
                     .iter()
                     .for_each(|child| wrapped_contents.push_str(&child.to_html()));
                 wrapped_contents.push_str("</div>");
+                wrapped_contents
+            }
+            NodeType::Image => {
+                // We need to store url and name (alt) in content - we need to seperate them with a char that can't be in the url or name
+                // for now lets use " | " to seperate them
+                let mut wrapped_contents = String::from("<img");
+                let image_alt_vec: Vec<&str> = self
+                    .content
+                    .as_ref()
+                    .expect("image should have content")
+                    .split(" | ")
+                    .collect();
+                assert!(image_alt_vec.len() == 2);
+                assert!(self.children.len() == 0);
+
+                let src_prop = format!("src=\"{}\"", image_alt_vec[0]);
+                let alt_prop = format!("alt=\"{}\"", image_alt_vec[1]);
+                let rest_of_img_tag = format!(" {} {} ></img>", src_prop, alt_prop);
+
+                wrapped_contents.push_str(&rest_of_img_tag);
+                wrapped_contents
+            }
+            NodeType::Link => {
+                let mut wrapped_contents = String::from("<a");
+                let href_text_vec: Vec<&str> = self
+                    .content
+                    .as_ref()
+                    .expect("image should have content")
+                    .split(" | ")
+                    .collect();
+                assert!(href_text_vec.len() == 2);
+                assert!(self.children.len() == 0);
+
+                let href_prop = format!("href=\"{}\"", href_text_vec[0]);
+                let text_content = href_text_vec[1];
+                let rest_of_img_tag = format!(" {}>{}</a>", href_prop, text_content);
+                wrapped_contents.push_str(&rest_of_img_tag);
                 wrapped_contents
             }
         }
