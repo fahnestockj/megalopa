@@ -137,6 +137,63 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                 // skip chars till the closing_char_idx
                 char_iter.nth(*offset_to_next_backtick);
             }
+            '*' => {
+                // end prev text node if there's content add it to Syntax Node
+                if text_node_contents.chars().count() > 0 {
+                    nodes.push(SyntaxNode {
+                        children: Box::new(vec![]),
+                        content: Some(text_node_contents.clone()),
+                        node_type: NodeType::Text,
+                    });
+                    text_node_contents.clear();
+                }
+
+                let mut is_bold = false;
+
+                // check for bold
+                // pull slice till closing tag
+                // create syntax node and recurse on child string slice
+                let mut idx_after_opening_chars = idx + 1;
+                if &string[idx_after_opening_chars..idx_after_opening_chars + 1] == "*" {
+                    idx_after_opening_chars += 1;
+                    is_bold = true;
+                }
+
+                let mut offset_to_closing_chars: usize;
+                if is_bold {
+                    let byte_idx_of_closing_chars = string[idx_after_opening_chars..]
+                        .find("**")
+                        .expect("no closing ** chars found");
+                    let offset_to_start_of_closing_chars = string[idx_after_opening_chars..]
+                        [..byte_idx_of_closing_chars]
+                        .chars()
+                        .count();
+                    offset_to_closing_chars = offset_to_start_of_closing_chars;
+                } else {
+                    offset_to_closing_chars = string[idx_after_opening_chars..]
+                        .chars()
+                        .position(|c| c == '*')
+                        .expect("No closing * char found");
+                }
+                let idx_after_next_asterisk = idx_after_opening_chars + offset_to_closing_chars;
+
+                // slice out the * or ** chars
+                let sub_str = &string[idx_after_opening_chars..(idx_after_next_asterisk)];
+                let children = str_to_inline_syntax_node(sub_str);
+                let node = SyntaxNode {
+                    node_type: NodeType::Italic,
+                    children: Box::new(children),
+                    content: None,
+                };
+                nodes.push(node);
+                // skip chars till the closing_char_idx
+                //TODO: bold needs to move 2 more than italics for some reason
+                if is_bold {
+                    offset_to_closing_chars += 2;
+                }
+
+                char_iter.nth(offset_to_closing_chars);
+            }
             _ => text_node_contents.push(char),
         }
     }
@@ -154,6 +211,18 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    pub fn testing_bold() {
+        let bold = "why **god** why **god** ";
+        let nodes = str_to_inline_syntax_node(&bold);
+        assert_eq!(nodes.iter().count(), 5)
+    }
+    #[test]
+    pub fn testing_italics() {
+        let italics = "why *god* why *god* ";
+        let nodes = str_to_inline_syntax_node(&italics);
+        assert_eq!(nodes.iter().count(), 5)
+    }
     #[test]
     pub fn testing_backticks() {
         let backticks = "why `god` why `god` ";
