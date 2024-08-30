@@ -14,6 +14,7 @@ pub enum NodeType {
     ListItem,
     OrderedList,
     Blockquote,
+    Div,
 }
 
 pub trait ToHtml {
@@ -24,7 +25,6 @@ impl ToHtml for SyntaxNode {
     fn to_html(&self) -> String {
         match self.node_type {
             NodeType::Text => {
-                // Nothing just return contents
                 self.content
                     .as_ref()
                     .expect("Text node should have content")
@@ -112,6 +112,14 @@ impl ToHtml for SyntaxNode {
                     .iter()
                     .for_each(|child| wrapped_contents.push_str(&child.to_html()));
                 wrapped_contents.push_str("</blockquote>");
+                wrapped_contents
+            }
+            NodeType::Div => {
+                let mut wrapped_contents = String::from("<div>");
+                self.children
+                    .iter()
+                    .for_each(|child| wrapped_contents.push_str(&child.to_html()));
+                wrapped_contents.push_str("</div>");
                 wrapped_contents
             }
         }

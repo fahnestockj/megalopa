@@ -13,7 +13,7 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
         }
         assert!(last_hashtag_idx < 7);
 
-        let rest_of_block = &block[(last_hashtag_idx + 1)..].trim();
+        let rest_of_block = &block[(last_hashtag_idx + 1)..].trim_start();
         let child_nodes = str_to_inline_syntax_node(rest_of_block);
         let parent_node = SyntaxNode {
             node_type: NodeType::Heading,
@@ -30,12 +30,12 @@ pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
             children: Box::new(child_nodes),
         };
         return vec![parent_node];
-    } else if block.trim().starts_with("-") {
+    } else if block.trim().starts_with("- ") {
         // break into list items and call str_to_inline_syntax_node on each
         let mut list_item_nodes: Vec<SyntaxNode> = vec![];
         for list_item in block.lines() {
             // If there is whitespace in front of the list item then nest the list
-            let is_nested = list_item.starts_with(" ");
+            let is_nested = list_item.starts_with("  ");
             let rest_of_list_item = list_item
                 .trim_start()
                 .strip_prefix("-")
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     pub fn nested_list() {
-        let unordered_block = "- another list item\n - another list item\n- another list item";
+        let unordered_block = "- another list item\n  - another list item\n- another list item";
         let unordered_nodes = block_to_syntax_nodes(unordered_block);
         let list_item_node = SyntaxNode {
             children: Box::new(vec![SyntaxNode {

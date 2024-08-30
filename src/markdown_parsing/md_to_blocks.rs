@@ -76,6 +76,17 @@ pub fn md_to_blocks(md_file: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    pub fn text_block_test() {
+        let md = "text\ntext\ntext";
+        let blocks = md_to_blocks(md);
+
+        let mut str_fixture = vec!["text", "text", "text"];
+        let string_fixture: Vec<String> =
+            str_fixture.iter_mut().map(|str| str.to_string()).collect();
+
+        assert_eq!(blocks, string_fixture);
+    }
 
     #[test]
     pub fn block_test() {

@@ -1,6 +1,6 @@
 use block_to_syntax_nodes::block_to_syntax_nodes;
 use md_to_blocks::md_to_blocks;
-use syntax_node::{SyntaxNode, ToHtml};
+use syntax_node::{SyntaxNode, ToHtml, NodeType};
 
 mod block_to_syntax_nodes;
 mod md_to_blocks;
@@ -29,11 +29,20 @@ pub fn parse_frontmatter(md_content: &str) -> Option<String> {
 
 pub fn parse_markdown(md_content: &str) -> String {
     let mut blocks = md_to_blocks(md_content);
+    // wrap each block with a div to create whitespace between blocks
+    let div_node = SyntaxNode {
+        children: Box::new(vec![]),
+        content: None,
+        node_type: NodeType::Div
+    };
     let syntax_nodes: Vec<SyntaxNode> = blocks
         .iter_mut()
-        .flat_map(|block| block_to_syntax_nodes(block))
-        .collect();
-
+        .map(|block| block_to_syntax_nodes(block))
+        .map(|mut syntax_nodes_in_block| {
+            let mut block_wrapper_div = div_node.clone();
+            block_wrapper_div.children.append(&mut syntax_nodes_in_block);
+            block_wrapper_div
+        }).collect();
     let mut html = String::from("<div>");
 
     syntax_nodes
@@ -48,9 +57,17 @@ mod tests {
 
     #[test]
     pub fn md_to_html_test() {
-        let md = "# hi\nhello\n- list item\n- list item\nnot\n1. list item\n2. list item";
+        let md = "# hi\nhello";
         let html = parse_markdown(md);
-        let html_fixture = "<div><h1>hi</h1>hello<ul><li>list item</li><li>list item</li></ul>not<ol><li>list item</li><li>list item</li></ol></div>";
+        let html_fixture = "<div><div><h1>hi</h1></div><div>hello</div></div>";
+        assert_eq!(html, html_fixture);
+    }
+
+    #[test]
+    pub fn list_test() {
+        let md = "- unordered\n  - nested unordered";
+        let html = parse_markdown(md);
+        let html_fixture = "<div><div><ul><li>unordered</li><ul><li>nested unordered</li></ul></ul></div></div>";
         assert_eq!(html, html_fixture);
     }
 }
