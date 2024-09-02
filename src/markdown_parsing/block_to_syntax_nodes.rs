@@ -166,10 +166,15 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                 let slice_after_opening_chars = temp_char_iter.as_str();
                 
                 if is_bold {
-                    let byte_idx_of_closing_chars = slice_after_opening_chars
+                    let mut byte_idx_of_closing_chars = slice_after_opening_chars
                         .find("**")
                         .expect("no closing ** chars found");
-                    // if it's a ***bold italic*** we need to move the closing chars further along
+                    // if it's a ***bold italic*** we need to move the closing chars one further along
+                    // ex: "***test***" => <strong><i>test</i></strong>
+                    if slice_after_opening_chars[byte_idx_of_closing_chars..].chars().nth(2).eq(&Some('*')) {
+                        byte_idx_of_closing_chars += 1;
+                    }
+
                     let offset_to_start_of_closing_chars = slice_after_opening_chars
                         [..byte_idx_of_closing_chars]
                         .chars()
@@ -197,13 +202,13 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                     content: None,
                 };
                 nodes.push(node);
-                // skip chars till the closing_char_idx
-                //TODO: bold needs to move 2 more than italics for some reason
-                // document why!
+
                 if is_bold {
+                    // char_iter still has 1 * before the substr and 1 more than italics after
+                    // ex: "*god**"
                     char_length_of_sub_string += 2;
                 }
-
+                // nth is 0 indexed so this skips char_length + 1 chars
                 char_iter.nth(char_length_of_sub_string);
             }
             '!' => {
@@ -230,11 +235,11 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
 mod tests {
     use super::*;
     // TODO:
-    // #[test]
+    #[test]
     pub fn bold_italics() {
         let bold_italics = "why ***god***";
         let nodes = str_to_inline_syntax_node(&bold_italics);
-        assert_eq!(nodes.iter().count(), 5)
+        assert_eq!(nodes.iter().count(), 2)
     }
 
     #[test]
