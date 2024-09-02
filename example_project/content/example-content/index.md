@@ -2,6 +2,9 @@
 content_name: example-content
 ---
 # Hi from a content index file
+
+# ***bold***
+
 ## hello  
 
 - a list item

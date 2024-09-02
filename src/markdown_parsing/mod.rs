@@ -5,6 +5,7 @@ use syntax_node::{SyntaxNode, ToHtml, NodeType};
 mod block_to_syntax_nodes;
 mod md_to_blocks;
 mod syntax_node;
+mod parse_links_or_images;
 
 pub fn parse_frontmatter(md_content: &str) -> Option<String> {
     let mut lines_itr = md_content.lines();

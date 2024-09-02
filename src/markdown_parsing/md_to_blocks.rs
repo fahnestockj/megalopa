@@ -1,4 +1,3 @@
-use regex;
 pub fn md_to_blocks(md_file: &str) -> Vec<String> {
     let mut blocks: Vec<String> = vec![];
 
