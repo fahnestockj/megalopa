@@ -1,4 +1,9 @@
-use super::syntax_node::{NodeType, SyntaxNode};
+use std::fmt::format;
+
+use super::{
+    parse_md_link_or_image::{self, LinkOrImageProps},
+    syntax_node::{NodeType, SyntaxNode},
+};
 pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
     // this checks the relevant chars at the start of the block
     if block.starts_with("#") {
@@ -226,6 +231,23 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
             '!' => {
                 //image?
                 // a valid image should have [...](...) next
+                let rest_of_str: String = char_iter.clone().map(|(_, char)| char).collect();
+                let res = parse_md_link_or_image::parse_md_link_or_image(&rest_of_str);
+
+                if let Some((image_props, char_length_of_link)) = res {
+                    // create node and take nth
+                    // "{src} | {alt}"
+                    let image_props = format!("{} | {}", image_props.path, image_props.name);
+                    let node = SyntaxNode {
+                        children: Box::new(vec![]),
+                        content: Some(image_props),
+                        node_type: NodeType::Image,
+                    };
+                    nodes.push(node);
+                    char_iter.nth(char_length_of_link-1);
+                } else {
+                    text_node_contents.push(char);
+                }
             }
             '[' => {
                 // link?
@@ -247,7 +269,7 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // TODO:
+
     #[test]
     pub fn bold_italics() {
         let bold_italics = "why ***god***";

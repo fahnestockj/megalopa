@@ -1,6 +1,6 @@
 pub struct LinkOrImageProps {
     pub name: String,
-    pub href: String,
+    pub path: String,
 }
 /// returns char length of the parsed link
 pub fn parse_md_link_or_image(str: &str) -> Option<(LinkOrImageProps, usize)> {
@@ -17,11 +17,11 @@ pub fn parse_md_link_or_image(str: &str) -> Option<(LinkOrImageProps, usize)> {
     }
 
     let closing_parenthesis_char_idx = iter.clone().position(|char| char.eq(&')'))?;
-    let href: String = iter.clone().take(closing_parenthesis_char_idx).collect();
+    let path: String = iter.clone().take(closing_parenthesis_char_idx).collect();
     iter.nth(closing_parenthesis_char_idx);
 
-    let link_char_len: usize = href.chars().count() + name.chars().count() + 4;
-    Some((LinkOrImageProps { href, name }, link_char_len))
+    let link_char_len: usize = path.chars().count() + name.chars().count() + 4;
+    Some((LinkOrImageProps { path, name }, link_char_len))
 }
 
 #[cfg(test)]
@@ -36,7 +36,7 @@ mod tests {
         assert!(res.is_some());
 
         if let Some(res) = res {
-            assert_eq!(res.0.href, "/hi");
+            assert_eq!(res.0.path, "/hi");
             assert_eq!(res.0.name, "hi");
             assert_eq!(res.1, link.chars().count())
         }
@@ -49,7 +49,7 @@ mod tests {
         assert!(res.is_some());
 
         if let Some(res) = res {
-            assert_eq!(res.0.href, "/text");
+            assert_eq!(res.0.path, "/text");
             assert_eq!(res.0.name, "text");
             assert_eq!(res.1, 13)
         }
