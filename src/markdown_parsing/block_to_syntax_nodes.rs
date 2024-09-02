@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use super::{
     parse_md_link_or_image,
     syntax_node::{NodeType, SyntaxNode},
