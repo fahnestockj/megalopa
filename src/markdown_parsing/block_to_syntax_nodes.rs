@@ -154,8 +154,13 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                 // pull slice till closing tag
                 // create syntax node and recurse on child string slice
                 let mut char_idx_after_opening_chars = idx + 1;
-                
-                if string.chars().skip(char_idx_after_opening_chars).next().eq(&Some('*')) {
+
+                if string
+                    .chars()
+                    .skip(char_idx_after_opening_chars)
+                    .next()
+                    .eq(&Some('*'))
+                {
                     char_idx_after_opening_chars += 1;
                     is_bold = true;
                 }
@@ -164,14 +169,18 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                 let mut temp_char_iter = string.chars();
                 temp_char_iter.nth(char_idx_after_opening_chars - 1);
                 let slice_after_opening_chars = temp_char_iter.as_str();
-                
+
                 if is_bold {
                     let mut byte_idx_of_closing_chars = slice_after_opening_chars
                         .find("**")
                         .expect("no closing ** chars found");
                     // if it's a ***bold italic*** we need to move the closing chars one further along
                     // ex: "***test***" => <strong><i>test</i></strong>
-                    if slice_after_opening_chars[byte_idx_of_closing_chars..].chars().nth(2).eq(&Some('*')) {
+                    if slice_after_opening_chars[byte_idx_of_closing_chars..]
+                        .chars()
+                        .nth(2)
+                        .eq(&Some('*'))
+                    {
                         byte_idx_of_closing_chars += 1;
                     }
 
@@ -187,7 +196,10 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                         .expect("No closing * char found");
                 }
                 // slice out the * or ** chars
-                let sub_str: String  = slice_after_opening_chars.chars().take(char_length_of_sub_string).collect();
+                let sub_str: String = slice_after_opening_chars
+                    .chars()
+                    .take(char_length_of_sub_string)
+                    .collect();
 
                 // let sub_str = &string[char_idx_after_opening_chars..(idx_after_next_asterisk)];
                 let children = str_to_inline_syntax_node(&sub_str);
@@ -213,6 +225,7 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
             }
             '!' => {
                 //image?
+                // a valid image should have [...](...) next
             }
             '[' => {
                 // link?
@@ -259,8 +272,7 @@ mod tests {
         let string = "0123*";
         if string[4..].chars().next().eq(&Some('*')) {
             assert!(true);
-        }
-        else {
+        } else {
             assert!(false);
         }
     }
