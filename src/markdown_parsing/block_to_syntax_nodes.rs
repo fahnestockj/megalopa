@@ -1,7 +1,7 @@
-use std::fmt::format;
+use std::fmt::Write;
 
 use super::{
-    parse_md_link_or_image::{self, LinkOrImageProps},
+    parse_md_link_or_image,
     syntax_node::{NodeType, SyntaxNode},
 };
 pub fn block_to_syntax_nodes(block: &str) -> Vec<SyntaxNode> {
@@ -235,6 +235,16 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                 let res = parse_md_link_or_image::parse_md_link_or_image(&rest_of_str);
 
                 if let Some((image_props, char_length_of_link)) = res {
+                    // end prev text node if there's content add it to Syntax Node
+                    if text_node_contents.chars().count() > 0 {
+                        nodes.push(SyntaxNode {
+                            children: Box::new(vec![]),
+                            content: Some(text_node_contents.clone()),
+                            node_type: NodeType::Text,
+                        });
+                        text_node_contents.clear();
+                    }
+
                     // create node and take nth
                     // "{src} | {alt}"
                     let image_props = format!("{} | {}", image_props.path, image_props.name);
@@ -244,13 +254,41 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                         node_type: NodeType::Image,
                     };
                     nodes.push(node);
-                    char_iter.nth(char_length_of_link-1);
+                    char_iter.nth(char_length_of_link - 1);
                 } else {
                     text_node_contents.push(char);
                 }
             }
             '[' => {
                 // link?
+                let mut rest_of_str: String = char_iter.clone().map(|(_, char)| char).collect();
+                rest_of_str.insert(0, '[');
+                let res = parse_md_link_or_image::parse_md_link_or_image(&rest_of_str);
+
+                if let Some((link_props, char_length_of_link)) = res {
+                    // end prev text node if there's content add it to Syntax Node
+                    if text_node_contents.chars().count() > 0 {
+                        nodes.push(SyntaxNode {
+                            children: Box::new(vec![]),
+                            content: Some(text_node_contents.clone()),
+                            node_type: NodeType::Text,
+                        });
+                        text_node_contents.clear();
+                    }
+
+                    // create node and take nth
+                    // "{href} | {text}"
+                    let link_props = format!("{} | {}", link_props.path, link_props.name);
+                    let node = SyntaxNode {
+                        children: Box::new(vec![]),
+                        content: Some(link_props),
+                        node_type: NodeType::Link,
+                    };
+                    nodes.push(node);
+                    char_iter.nth(char_length_of_link - 1);
+                } else {
+                    text_node_contents.push(char);
+                }
             }
             _ => text_node_contents.push(char),
         }
@@ -269,6 +307,42 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    pub fn image() {
+        let image = "![cat](/cat.jpg)";
+        let nodes = str_to_inline_syntax_node(&image);
+        let img_node = &nodes[0];
+        assert_eq!(img_node.node_type, NodeType::Image);
+        assert_eq!(img_node.content, Some(String::from("/cat.jpg | cat")));
+    }
+    #[test]
+    pub fn image_within_text() {
+        let image = "some text ![cat](/cat.jpg) then other text";
+        let nodes = str_to_inline_syntax_node(&image);
+        dbg!(&nodes);
+        let img_node = &nodes[1];
+        assert_eq!(img_node.node_type, NodeType::Image);
+        assert_eq!(img_node.content, Some(String::from("/cat.jpg | cat")));
+    }
+
+    #[test]
+    pub fn link() {
+        let link = "[cat](/cat)";
+        let nodes = str_to_inline_syntax_node(&link);
+        let img_node = &nodes[0];
+        assert_eq!(img_node.node_type, NodeType::Link);
+        assert_eq!(img_node.content, Some(String::from("/cat | cat")));
+    }
+    #[test]
+    pub fn link_within_text() {
+        let link = "some text [cat](/cat) then other text";
+        let nodes = str_to_inline_syntax_node(&link);
+        dbg!(&nodes);
+        let img_node = &nodes[1];
+        assert_eq!(img_node.node_type, NodeType::Link);
+        assert_eq!(img_node.content, Some(String::from("/cat | cat")));
+    }
 
     #[test]
     pub fn bold_italics() {
