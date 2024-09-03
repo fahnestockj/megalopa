@@ -28,8 +28,8 @@ pub fn build(empty_out_dir: bool) {
     // clear out stale files
     if empty_out_dir {
         remove_dir_all("public").unwrap();
+        fs::create_dir("public").unwrap();
     }
-    fs::create_dir("public").unwrap();
     walk_content_dir(&proj_dir.join("content"), &tera, build_md_file).unwrap();
     walk_static_dir(&std::path::Path::new("../static"), copy_static_file).unwrap();
 }

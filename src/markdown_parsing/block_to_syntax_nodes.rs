@@ -283,7 +283,8 @@ fn str_to_inline_syntax_node(string: &str) -> Vec<SyntaxNode> {
                         node_type: NodeType::Link,
                     };
                     nodes.push(node);
-                    char_iter.nth(char_length_of_link - 1);
+                    // TODO: document why 2
+                    char_iter.nth(char_length_of_link - 2);
                 } else {
                     text_node_contents.push(char);
                 }
@@ -336,10 +337,12 @@ mod tests {
     pub fn link_within_text() {
         let link = "some text [cat](/cat) then other text";
         let nodes = str_to_inline_syntax_node(&link);
-        dbg!(&nodes);
         let img_node = &nodes[1];
+        let text_node = &nodes[2];
         assert_eq!(img_node.node_type, NodeType::Link);
         assert_eq!(img_node.content, Some(String::from("/cat | cat")));
+
+        assert_eq!(text_node.content, Some(String::from(" then other text")));
     }
 
     #[test]
