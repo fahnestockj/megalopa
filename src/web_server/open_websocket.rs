@@ -1,4 +1,4 @@
-use crate::{build, utils::get_project_dir};
+use crate::{build, proj_config_utils::get_project_dir};
 use notify::{RecursiveMode, Watcher};
 use std::{net::TcpStream, time::Duration};
 

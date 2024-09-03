@@ -1,6 +1,6 @@
 use std::{fs, fs::DirEntry, io, path::Path};
 
-use crate::{build::path_utils::get_relative_file_path, utils::get_project_dir};
+use crate::{build::path_utils::get_relative_file_path, proj_config_utils::get_project_dir};
 
 /// recursively walks through the dir and calls cb on files
 pub fn walk_static_dir(dir: &Path, cb: fn(&DirEntry) -> io::Result<()>) -> io::Result<()> {

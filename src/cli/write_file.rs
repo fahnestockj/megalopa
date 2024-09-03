@@ -2,7 +2,7 @@ use slug;
 use std::fs;
 use std::io::Write;
 
-use crate::utils::get_project_dir;
+use crate::proj_config_utils::get_project_dir;
 
 /// Creates a new md file
 pub fn write_file(title: String, mut content_name: String) -> std::io::Result<()> {

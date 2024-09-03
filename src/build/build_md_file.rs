@@ -1,6 +1,6 @@
 use std::{path, fs, io};
 use tera::Tera;
-use crate::{build::path_utils::{get_relative_file_path, get_relative_file_path_for_routing}, markdown_parsing::parse_markdown, utils::{get_project_dir, read_config}};
+use crate::{build::path_utils::{get_relative_file_path, get_relative_file_path_for_routing}, markdown_parsing::parse_markdown, proj_config_utils::{get_project_dir, read_config}};
 use super::parse_md::{ContentFileMetadata, IndexFileMetadata};
 
 /// md -> html content -> injected into template

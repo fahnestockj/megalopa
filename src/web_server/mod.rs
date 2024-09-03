@@ -4,7 +4,7 @@ mod parse_http_headers;
 mod threads;
 
 use crate::build::build;
-use crate::utils::get_project_dir;
+use crate::proj_config_utils::get_project_dir;
 use get_content_type_from_file_extension::get_content_type_from_file_extension;
 
 use http_bytes::http::{Response, StatusCode};

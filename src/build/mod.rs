@@ -7,7 +7,7 @@ use tera::Tera;
 use walk_content_dir::walk_content_dir;
 use walk_static_dir::{copy_static_file, walk_static_dir};
 
-use crate::utils::get_project_dir;
+use crate::proj_config_utils::get_project_dir;
 
 mod build_md_file;
 mod parse_md;
