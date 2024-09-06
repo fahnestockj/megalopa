@@ -19,9 +19,9 @@ def make_rust_test(json) -> str:
     flat_dict = parse_json(json["data"],"",0)
   for key in flat_dict:
     test += "\n\tctx.insert(" + coerce_str(key) + "," + coerce_str(flat_dict[key]) + ");"
-  test += "\n\tlet result = engine.render(ctx);"
+  test += "\n\tlet result = engine.oneoff_render(ctx);"
   test += "\n\tlet expected = String::from(" + coerce_str(json["expected"]) + ");"
-  test += "\n\tassert_eq(result, expected)"
+  test += "\n\tassert_eq!(result, expected)"
   test += "\n}"
   return test
 
@@ -37,7 +37,7 @@ def parse_json(json,parents,n) -> dict:
         if isinstance(val, dict) or isinstance(val,list):
           list_dict = parse_json(val, parents+"."+str(idx), n+1)
           flattened_dict.update(list_dict)
-          print(flattened_dict)
+          # print(flattened_dict)
         else:
             flattened_dict[parents+"."+str(idx)] = val
 
@@ -52,12 +52,14 @@ def parse_json(json,parents,n) -> dict:
 
 spec_dir = Path("../mustache_spec/spec/specs")
 for file in spec_dir.glob("*.json"):
+  if file.name == "~lambdas.json":
+     continue
   read_stream = file.open()
   jsond = json.load(read_stream)
   test_dir = Path("../src/html_templating/spec_tests")
-  test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5] + ".rs")
+  test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5].replace("~", "").replace("-", "_") + ".rs")
   write_stream = test_file.open("w")
-  file_txt = "#[cfg(test)]\nmod tests {\n\t"
+  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{create_oneoff_engine, oneoff_render};\n\t"
   for test_json in jsond["tests"]:
     test_str = make_rust_test(test_json)
     file_txt += test_str

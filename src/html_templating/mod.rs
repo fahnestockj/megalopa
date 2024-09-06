@@ -1,3 +1,4 @@
+mod spec_tests;
 // A mustache compliant templating engine 🚀
 // (minus lambdas)
 

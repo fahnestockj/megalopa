@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+	use crate::html_templating::{create_oneoff_engine, oneoff_render};
 	
 
 /// The greater-than operator should expand to the named partial.
@@ -8,9 +9,9 @@ pub fn basic_behavior () {
 	let template = "\"{{>text}}\"";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"from partial\"");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// The empty string should be used when the named partial is not found.
@@ -19,9 +20,9 @@ pub fn failed_lookup () {
 	let template = "\"{{>text}}\"";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"\"");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// The greater-than operator should operate within the current context.
@@ -31,9 +32,9 @@ pub fn context () {
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".text","content");
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"*content*\"");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// The greater-than operator should properly recurse.
@@ -43,9 +44,9 @@ pub fn recursion () {
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".content","X");
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("X<Y<>>");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// The greater-than operator should work from within partials.
@@ -56,9 +57,9 @@ pub fn nested () {
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".a","hello");
 	ctx.insert(".b","world");
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("*hello world!*");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// The greater-than operator should not alter surrounding whitespace.
@@ -67,9 +68,9 @@ pub fn surrounding_whitespace () {
 	let template = "| {{>partial}} |";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("| \t|\t |");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// Whitespace should be left untouched.
@@ -79,9 +80,9 @@ pub fn inline_indentation () {
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".data","|");
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("  |  >\n>\n");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// "\r\n" should be considered a newline for standalone tags.
@@ -90,9 +91,9 @@ pub fn standalone_line_endings () {
 	let template = "|\r\n{{>partial}}\r\n|";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|\r\n>|");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// Standalone tags should not require a newline to precede them.
@@ -101,9 +102,9 @@ pub fn standalone_without_previous_line () {
 	let template = "  {{>partial}}\n>";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("  >\n  >>");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// Standalone tags should not require a newline to follow them.
@@ -112,9 +113,9 @@ pub fn standalone_without_newline () {
 	let template = ">\n  {{>partial}}";
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from(">\n  >\n  >");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// Each line of the partial should be indented before rendering.
@@ -124,9 +125,9 @@ pub fn standalone_indentation () {
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".content","<\n->");
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\\\n |\n <\n->\n |\n/\n");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 
 /// Superfluous in-tag whitespace should be ignored.
@@ -136,8 +137,8 @@ pub fn padding_whitespace () {
 	let engine = create_oneoff_engine(template);
 	let mut ctx = std::collections::HashMap::new();
 	ctx.insert(".boolean",true);
-	let result = engine.render(ctx);
+	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|[]|");
-	assert_eq(result, expected)
+	assert_eq!(result, expected)
 }
 }
