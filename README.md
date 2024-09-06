@@ -4,12 +4,12 @@
 A static site generator built from scratch!
 
 Including:
-- A Markdown -> Html parser
+- A Markdown -> HTML converter
 - A web server with live reload
 - A CLI (using clap)
 
 WIP:
-- Html Templating for theme creation (and sharing)
+- A Mustache 🥸 compliant HTML templating engine
 
 
 ### Installation
@@ -49,5 +49,3 @@ Project-Name/
 
 ### Templates
 TODO: overrides not implemented yet
-
-Megalopa uses the [Tera](https://keats.github.io/tera/) templating engine. You can overwrite the default templates by creating a `templates` directory in the root of your project.

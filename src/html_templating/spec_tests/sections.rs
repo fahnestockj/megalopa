@@ -1,0 +1,399 @@
+#[cfg(test)]
+mod tests {
+	
+
+/// Truthy sections should have their contents rendered.
+#[test]
+pub fn truthy () {
+	let template = "\"{{#boolean}}This should be rendered.{{/boolean}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("\"This should be rendered.\"");
+	assert_eq(result, expected)
+}
+
+/// Falsey sections should have their contents omitted.
+#[test]
+pub fn falsey () {
+	let template = "\"{{#boolean}}This should not be rendered.{{/boolean}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",false);
+	let result = engine.render(ctx);
+	let expected = String::from("\"\"");
+	assert_eq(result, expected)
+}
+
+/// Null is falsey.
+#[test]
+pub fn null_is_falsey () {
+	let template = "\"{{#null}}This should not be rendered.{{/null}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".null",null);
+	let result = engine.render(ctx);
+	let expected = String::from("\"\"");
+	assert_eq(result, expected)
+}
+
+/// Objects and hashes should be pushed onto the context stack.
+#[test]
+pub fn context () {
+	let template = "\"{{#context}}Hi {{name}}.{{/context}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"Hi Joe.\"");
+	assert_eq(result, expected)
+}
+
+/// Names missing in the current context are looked up in the stack.
+#[test]
+pub fn parent_contexts () {
+	let template = "\"{{#sec}}{{a}}, {{b}}, {{c.d}}{{/sec}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".a","foo");
+	ctx.insert(".b","wrong");
+	let result = engine.render(ctx);
+	let expected = String::from("\"foo, bar, baz\"");
+	assert_eq(result, expected)
+}
+
+/// Non-false sections have their value at the top of context,
+/// accessible as {{.}} or through the parent context. This gives
+/// a simple way to display content conditionally if a variable exists.
+#[test]
+pub fn variable_test () {
+	let template = "\"{{#foo}}{{.}} is {{foo}}{{/foo}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".foo","bar");
+	let result = engine.render(ctx);
+	let expected = String::from("\"bar is bar\"");
+	assert_eq(result, expected)
+}
+
+/// All elements on the context stack should be accessible within lists.
+#[test]
+pub fn list_contexts () {
+	let template = "{{#tops}}{{#middles}}{{tname.lower}}{{mname}}.{{#bottoms}}{{tname.upper}}{{mname}}{{bname}}.{{/bottoms}}{{/middles}}{{/tops}}";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("a1.A1x.A1y.");
+	assert_eq(result, expected)
+}
+
+/// All elements on the context stack should be accessible.
+#[test]
+pub fn deeply_nested_contexts () {
+	let template = "{{#a}}\n{{one}}\n{{#b}}\n{{one}}{{two}}{{one}}\n{{#c}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{#d}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{#five}}\n{{one}}{{two}}{{three}}{{four}}{{five}}{{four}}{{three}}{{two}}{{one}}\n{{one}}{{two}}{{three}}{{four}}{{.}}6{{.}}{{four}}{{three}}{{two}}{{one}}\n{{one}}{{two}}{{three}}{{four}}{{five}}{{four}}{{three}}{{two}}{{one}}\n{{/five}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{/d}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{/c}}\n{{one}}{{two}}{{one}}\n{{/b}}\n{{one}}\n{{/a}}\n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("1\n121\n12321\n1234321\n123454321\n12345654321\n123454321\n1234321\n12321\n121\n1\n");
+	assert_eq(result, expected)
+}
+
+/// Lists should be iterated; list items should visit the context stack.
+#[test]
+pub fn list () {
+	let template = "\"{{#list}}{{item}}{{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"123\"");
+	assert_eq(result, expected)
+}
+
+/// Empty lists should behave like falsey values.
+#[test]
+pub fn empty_list () {
+	let template = "\"{{#list}}Yay lists!{{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"\"");
+	assert_eq(result, expected)
+}
+
+/// Multiple sections per template should be permitted.
+#[test]
+pub fn doubled () {
+	let template = "{{#bool}}\n* first\n{{/bool}}\n* {{two}}\n{{#bool}}\n* third\n{{/bool}}\n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".bool",true);
+	ctx.insert(".two","second");
+	let result = engine.render(ctx);
+	let expected = String::from("* first\n* second\n* third\n");
+	assert_eq(result, expected)
+}
+
+/// Nested truthy sections should have their contents rendered.
+#[test]
+pub fn nested_truthy () {
+	let template = "| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".bool",true);
+	let result = engine.render(ctx);
+	let expected = String::from("| A B C D E |");
+	assert_eq(result, expected)
+}
+
+/// Nested falsey sections should be omitted.
+#[test]
+pub fn nested_falsey () {
+	let template = "| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".bool",false);
+	let result = engine.render(ctx);
+	let expected = String::from("| A  E |");
+	assert_eq(result, expected)
+}
+
+/// Failed context lookups should be considered falsey.
+#[test]
+pub fn context_misses () {
+	let template = "[{{#missing}}Found key 'missing'!{{/missing}}]";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("[]");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators should directly interpolate strings.
+#[test]
+pub fn implicit_iterator__string () {
+	let template = "\"{{#list}}({{.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(a)(b)(c)(d)(e)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators should cast integers to strings and interpolate.
+#[test]
+pub fn implicit_iterator__integer () {
+	let template = "\"{{#list}}({{.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(1)(2)(3)(4)(5)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators should cast decimals to strings and interpolate.
+#[test]
+pub fn implicit_iterator__decimal () {
+	let template = "\"{{#list}}({{.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(1.1)(2.2)(3.3)(4.4)(5.5)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators should allow iterating over nested arrays.
+#[test]
+pub fn implicit_iterator__array () {
+	let template = "\"{{#list}}({{#.}}{{.}}{{/.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(123)(abc)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators with basic interpolation should be HTML escaped.
+#[test]
+pub fn implicit_iterator__html_escaping () {
+	let template = "\"{{#list}}({{.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(&amp;)(&quot;)(&lt;)(&gt;)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators in triple mustache should interpolate without HTML escaping.
+#[test]
+pub fn implicit_iterator__triple_mustache () {
+	let template = "\"{{#list}}({{{.}}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(&)(\")(<)(>)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators in an Ampersand tag should interpolate without HTML escaping.
+#[test]
+pub fn implicit_iterator__ampersand () {
+	let template = "\"{{#list}}({{&.}}){{/list}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(&)(\")(<)(>)\"");
+	assert_eq(result, expected)
+}
+
+/// Implicit iterators should work on root-level lists.
+#[test]
+pub fn implicit_iterator__rootlevel () {
+	let template = "\"{{#.}}({{value}}){{/.}}\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"(a)(b)\"");
+	assert_eq(result, expected)
+}
+
+/// Dotted names should be valid for Section tags.
+#[test]
+pub fn dotted_names__truthy () {
+	let template = "\"{{#a.b.c}}Here{{/a.b.c}}\" == \"Here\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"Here\" == \"Here\"");
+	assert_eq(result, expected)
+}
+
+/// Dotted names should be valid for Section tags.
+#[test]
+pub fn dotted_names__falsey () {
+	let template = "\"{{#a.b.c}}Here{{/a.b.c}}\" == \"\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"\" == \"\"");
+	assert_eq(result, expected)
+}
+
+/// Dotted names that cannot be resolved should be considered falsey.
+#[test]
+pub fn dotted_names__broken_chains () {
+	let template = "\"{{#a.b.c}}Here{{/a.b.c}}\" == \"\"";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	let result = engine.render(ctx);
+	let expected = String::from("\"\" == \"\"");
+	assert_eq(result, expected)
+}
+
+/// Sections should not alter surrounding whitespace.
+#[test]
+pub fn surrounding_whitespace () {
+	let template = " | {{#boolean}}\t|\t{{/boolean}} | \n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from(" | \t|\t | \n");
+	assert_eq(result, expected)
+}
+
+/// Sections should not alter internal whitespace.
+#[test]
+pub fn internal_whitespace () {
+	let template = " | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from(" |  \n  | \n");
+	assert_eq(result, expected)
+}
+
+/// Single-line sections should not alter surrounding whitespace.
+#[test]
+pub fn indented_inline_sections () {
+	let template = " {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from(" YES\n GOOD\n");
+	assert_eq(result, expected)
+}
+
+/// Standalone lines should be removed from the template.
+#[test]
+pub fn standalone_lines () {
+	let template = "| This Is\n{{#boolean}}\n|\n{{/boolean}}\n| A Line\n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("| This Is\n|\n| A Line\n");
+	assert_eq(result, expected)
+}
+
+/// Indented standalone lines should be removed from the template.
+#[test]
+pub fn indented_standalone_lines () {
+	let template = "| This Is\n  {{#boolean}}\n|\n  {{/boolean}}\n| A Line\n";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("| This Is\n|\n| A Line\n");
+	assert_eq(result, expected)
+}
+
+/// "\r\n" should be considered a newline for standalone tags.
+#[test]
+pub fn standalone_line_endings () {
+	let template = "|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("|\r\n|");
+	assert_eq(result, expected)
+}
+
+/// Standalone tags should not require a newline to precede them.
+#[test]
+pub fn standalone_without_previous_line () {
+	let template = "  {{#boolean}}\n#{{/boolean}}\n/";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("#\n/");
+	assert_eq(result, expected)
+}
+
+/// Standalone tags should not require a newline to follow them.
+#[test]
+pub fn standalone_without_newline () {
+	let template = "#{{#boolean}}\n/\n  {{/boolean}}";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("#\n/\n");
+	assert_eq(result, expected)
+}
+
+/// Superfluous in-tag whitespace should be ignored.
+#[test]
+pub fn padding () {
+	let template = "|{{# boolean }}={{/ boolean }}|";
+	let engine = create_oneoff_engine(template);
+	let mut ctx = std::collections::HashMap::new();
+	ctx.insert(".boolean",true);
+	let result = engine.render(ctx);
+	let expected = String::from("|=|");
+	assert_eq(result, expected)
+}
+}
