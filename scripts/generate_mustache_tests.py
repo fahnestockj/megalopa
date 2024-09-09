@@ -9,27 +9,41 @@ def make_rust_test(json) -> str:
   test += "\n#[test]\npub fn "
   test += '_'.join(str.split(str.lower(json["name"]).replace('-', "").replace('(',"").replace(')', "").replace(',',""), ' '))
   test += " () {"
-  test += "\n\tlet template = " + coerce_str(json["template"]) + r";"
+  test += "\n\tlet template = " + json_dump(json["template"]) + r";"
   test += "\n\tlet engine = create_oneoff_engine(template);"
-  test += "\n\tlet mut ctx = std::collections::HashMap::new();"
+  test += "\n\tlet mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();"
   # flatten json keys into one dict then insert into hashmap
   flat_dict = {}
 
   if isinstance(json["data"],dict):
     flat_dict = parse_json(json["data"],"",0)
   for key in flat_dict:
-    test += "\n\tctx.insert(" + coerce_str(key) + "," + coerce_str(flat_dict[key]) + ");"
+    test += "\n\tctx.insert(" + json_dump(key) + "," + wrap_ctx_value(json_dump(flat_dict[key])) + ");"
   test += "\n\tlet result = engine.oneoff_render(ctx);"
-  test += "\n\tlet expected = String::from(" + coerce_str(json["expected"]) + ");"
+  test += "\n\tlet expected = String::from(" + json_dump(json["expected"]) + ");"
   test += "\n\tassert_eq!(result, expected)"
   test += "\n}"
   return test
 
-# the goal is to get a double quotes wrapped string with escaped chars
-def coerce_str(maybe_wrapped_string) -> str:
+# may use to alter the json dump later otherwise delete
+def json_dump(maybe_wrapped_string):
    return json.dumps(maybe_wrapped_string)
-  
 
+# Rust CtxValue enum for the hashmap
+def wrap_ctx_value(val: str):
+   
+   if val.startswith("true") or val.startswith("false"):
+      return f"CtxValue::Boolean({str(val)})"
+   if val.isnumeric():
+      return f"CtxValue::Number({str(val)})"
+   if val.startswith("null"):
+      return "CtxValue::Boolean(false)"
+  
+   else:
+      return f"CtxValue::String({val}.to_string())"
+
+
+# flattening nested json keys by joining with a .
 def parse_json(json,parents,n) -> dict:
   flattened_dict = {}
   if isinstance(json, list):
@@ -52,14 +66,15 @@ def parse_json(json,parents,n) -> dict:
 
 spec_dir = Path("../mustache_spec/spec/specs")
 for file in spec_dir.glob("*.json"):
-  if file.name == "~lambdas.json":
+  # skip optional tests
+  if file.name[0] == "~":
      continue
   read_stream = file.open()
   jsond = json.load(read_stream)
   test_dir = Path("../src/html_templating/spec_tests")
-  test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5].replace("~", "").replace("-", "_") + ".rs")
+  test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5].replace("~", "_").replace("-", "_") + ".rs")
   write_stream = test_file.open("w")
-  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{create_oneoff_engine, oneoff_render};\n\t"
+  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{create_oneoff_engine, oneoff_render, CtxValue};\n\t"
   for test_json in jsond["tests"]:
     test_str = make_rust_test(test_json)
     file_txt += test_str

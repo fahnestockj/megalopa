@@ -1,15 +1,14 @@
 #[cfg(test)]
 mod tests {
-	use crate::html_templating::{create_oneoff_engine, oneoff_render};
+	use crate::html_templating::{create_oneoff_engine, oneoff_render, CtxValue};
 	
-
 /// The equals sign (used on both sides) should permit delimiter changes.
 #[test]
 pub fn pair_behavior () {
 	let template = "{{=<% %>=}}(<%text%>)";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".text","Hey!");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".text",CtxValue::String("Hey!".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("(Hey!)");
 	assert_eq!(result, expected)
@@ -20,8 +19,8 @@ pub fn pair_behavior () {
 pub fn special_characters () {
 	let template = "({{=[ ]=}}[text])";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".text","It worked!");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".text",CtxValue::String("It worked!".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("(It worked!)");
 	assert_eq!(result, expected)
@@ -32,9 +31,9 @@ pub fn special_characters () {
 pub fn sections () {
 	let template = "[\n{{#section}}\n  {{data}}\n  |data|\n{{/section}}\n\n{{= | | =}}\n|#section|\n  {{data}}\n  |data|\n|/section|\n]\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".section",true);
-	ctx.insert(".data","I got interpolated.");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".section",CtxValue::Boolean(true));
+	ctx.insert(".data",CtxValue::String("I got interpolated.".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("[\n  I got interpolated.\n  |data|\n\n  {{data}}\n  I got interpolated.\n]\n");
 	assert_eq!(result, expected)
@@ -45,9 +44,9 @@ pub fn sections () {
 pub fn inverted_sections () {
 	let template = "[\n{{^section}}\n  {{data}}\n  |data|\n{{/section}}\n\n{{= | | =}}\n|^section|\n  {{data}}\n  |data|\n|/section|\n]\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".section",false);
-	ctx.insert(".data","I got interpolated.");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".section",CtxValue::Boolean(false));
+	ctx.insert(".data",CtxValue::String("I got interpolated.".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("[\n  I got interpolated.\n  |data|\n\n  {{data}}\n  I got interpolated.\n]\n");
 	assert_eq!(result, expected)
@@ -58,8 +57,8 @@ pub fn inverted_sections () {
 pub fn partial_inheritence () {
 	let template = "[ {{>include}} ]\n{{= | | =}}\n[ |>include| ]\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".value","yes");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".value",CtxValue::String("yes".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("[ .yes. ]\n[ .yes. ]\n");
 	assert_eq!(result, expected)
@@ -70,8 +69,8 @@ pub fn partial_inheritence () {
 pub fn postpartial_behavior () {
 	let template = "[ {{>include}} ]\n[ .{{value}}.  .|value|. ]\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".value","yes");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".value",CtxValue::String("yes".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("[ .yes.  .yes. ]\n[ .yes.  .|value|. ]\n");
 	assert_eq!(result, expected)
@@ -82,7 +81,7 @@ pub fn postpartial_behavior () {
 pub fn surrounding_whitespace () {
 	let template = "| {{=@ @=}} |";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|  |");
 	assert_eq!(result, expected)
@@ -93,7 +92,7 @@ pub fn surrounding_whitespace () {
 pub fn outlying_whitespace_inline () {
 	let template = " | {{=@ @=}}\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from(" | \n");
 	assert_eq!(result, expected)
@@ -104,7 +103,7 @@ pub fn outlying_whitespace_inline () {
 pub fn standalone_tag () {
 	let template = "Begin.\n{{=@ @=}}\nEnd.\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("Begin.\nEnd.\n");
 	assert_eq!(result, expected)
@@ -115,7 +114,7 @@ pub fn standalone_tag () {
 pub fn indented_standalone_tag () {
 	let template = "Begin.\n  {{=@ @=}}\nEnd.\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("Begin.\nEnd.\n");
 	assert_eq!(result, expected)
@@ -126,7 +125,7 @@ pub fn indented_standalone_tag () {
 pub fn standalone_line_endings () {
 	let template = "|\r\n{{= @ @ =}}\r\n|";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|\r\n|");
 	assert_eq!(result, expected)
@@ -137,7 +136,7 @@ pub fn standalone_line_endings () {
 pub fn standalone_without_previous_line () {
 	let template = "  {{=@ @=}}\n=";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("=");
 	assert_eq!(result, expected)
@@ -148,7 +147,7 @@ pub fn standalone_without_previous_line () {
 pub fn standalone_without_newline () {
 	let template = "=\n  {{=@ @=}}";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("=\n");
 	assert_eq!(result, expected)
@@ -159,7 +158,7 @@ pub fn standalone_without_newline () {
 pub fn pair_with_padding () {
 	let template = "|{{= @   @ =}}|";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("||");
 	assert_eq!(result, expected)

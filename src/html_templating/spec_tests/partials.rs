@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-	use crate::html_templating::{create_oneoff_engine, oneoff_render};
+	use crate::html_templating::{create_oneoff_engine, oneoff_render, CtxValue};
 	
 
 /// The greater-than operator should expand to the named partial.
@@ -8,7 +8,7 @@ mod tests {
 pub fn basic_behavior () {
 	let template = "\"{{>text}}\"";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"from partial\"");
 	assert_eq!(result, expected)
@@ -19,7 +19,7 @@ pub fn basic_behavior () {
 pub fn failed_lookup () {
 	let template = "\"{{>text}}\"";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"\"");
 	assert_eq!(result, expected)
@@ -30,8 +30,8 @@ pub fn failed_lookup () {
 pub fn context () {
 	let template = "\"{{>partial}}\"";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".text","content");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".text",CtxValue::String("content".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\"*content*\"");
 	assert_eq!(result, expected)
@@ -42,8 +42,8 @@ pub fn context () {
 pub fn recursion () {
 	let template = "{{>node}}";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".content","X");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".content",CtxValue::String("X".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("X<Y<>>");
 	assert_eq!(result, expected)
@@ -54,9 +54,9 @@ pub fn recursion () {
 pub fn nested () {
 	let template = "{{>outer}}";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".a","hello");
-	ctx.insert(".b","world");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".a",CtxValue::String("hello".to_string()));
+	ctx.insert(".b",CtxValue::String("world".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("*hello world!*");
 	assert_eq!(result, expected)
@@ -67,7 +67,7 @@ pub fn nested () {
 pub fn surrounding_whitespace () {
 	let template = "| {{>partial}} |";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("| \t|\t |");
 	assert_eq!(result, expected)
@@ -78,8 +78,8 @@ pub fn surrounding_whitespace () {
 pub fn inline_indentation () {
 	let template = "  {{data}}  {{> partial}}\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".data","|");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".data",CtxValue::String("|".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("  |  >\n>\n");
 	assert_eq!(result, expected)
@@ -90,7 +90,7 @@ pub fn inline_indentation () {
 pub fn standalone_line_endings () {
 	let template = "|\r\n{{>partial}}\r\n|";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|\r\n>|");
 	assert_eq!(result, expected)
@@ -101,7 +101,7 @@ pub fn standalone_line_endings () {
 pub fn standalone_without_previous_line () {
 	let template = "  {{>partial}}\n>";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("  >\n  >>");
 	assert_eq!(result, expected)
@@ -112,7 +112,7 @@ pub fn standalone_without_previous_line () {
 pub fn standalone_without_newline () {
 	let template = ">\n  {{>partial}}";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from(">\n  >\n  >");
 	assert_eq!(result, expected)
@@ -123,8 +123,8 @@ pub fn standalone_without_newline () {
 pub fn standalone_indentation () {
 	let template = "\\\n {{>partial}}\n/\n";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".content","<\n->");
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".content",CtxValue::String("<\n->".to_string()));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("\\\n |\n <\n->\n |\n/\n");
 	assert_eq!(result, expected)
@@ -135,8 +135,8 @@ pub fn standalone_indentation () {
 pub fn padding_whitespace () {
 	let template = "|{{> partial }}|";
 	let engine = create_oneoff_engine(template);
-	let mut ctx = std::collections::HashMap::new();
-	ctx.insert(".boolean",true);
+	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(ctx);
 	let expected = String::from("|[]|");
 	assert_eq!(result, expected)
