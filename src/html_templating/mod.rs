@@ -4,11 +4,11 @@ use std::collections::HashMap;
 
 struct TemplateEngine;
 
-trait oneoff_render {
+trait OneoffRender {
     fn oneoff_render(&self, template_string: String, context: HashMap<&str, CtxValue>) -> String;
 }
 
-impl oneoff_render for TemplateEngine {
+impl OneoffRender for TemplateEngine {
     fn oneoff_render(&self, template_string: String, context: HashMap<&str, CtxValue>) -> String {
         mustachify(template_string, context)
     }

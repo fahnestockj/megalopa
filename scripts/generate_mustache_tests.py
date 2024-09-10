@@ -74,7 +74,7 @@ for file in spec_dir.glob("*.json"):
   test_dir = Path("../src/html_templating/spec_tests")
   test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5].replace("~", "_").replace("-", "_") + ".rs")
   write_stream = test_file.open("w")
-  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{TemplateEngine, oneoff_render, CtxValue};\n\t"
+  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{TemplateEngine, OneoffRender, CtxValue};\n\t"
   for test_json in jsond["tests"]:
     test_str = make_rust_test(test_json)
     file_txt += test_str

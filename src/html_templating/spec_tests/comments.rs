@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-	use crate::html_templating::{TemplateEngine, oneoff_render, CtxValue};
+	use crate::html_templating::{TemplateEngine, OneoffRender, CtxValue};
 	
 
 /// Comment blocks should be removed from the template.
