@@ -9,8 +9,8 @@ def make_rust_test(json) -> str:
   test += "\n#[test]\npub fn "
   test += '_'.join(str.split(str.lower(json["name"]).replace('-', "").replace('(',"").replace(')', "").replace(',',""), ' '))
   test += " () {"
-  test += "\n\tlet template = " + json_dump(json["template"]) + r";"
-  test += "\n\tlet engine = create_oneoff_engine(template);"
+  test += "\n\tlet template = " + json_dump(json["template"]) + ".to_string();"
+  test += "\n\tlet engine = TemplateEngine{};"
   test += "\n\tlet mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();"
   # flatten json keys into one dict then insert into hashmap
   flat_dict = {}
@@ -19,7 +19,7 @@ def make_rust_test(json) -> str:
     flat_dict = parse_json(json["data"],"",0)
   for key in flat_dict:
     test += "\n\tctx.insert(" + json_dump(key) + "," + wrap_ctx_value(json_dump(flat_dict[key])) + ");"
-  test += "\n\tlet result = engine.oneoff_render(ctx);"
+  test += "\n\tlet result = engine.oneoff_render(template, ctx);"
   test += "\n\tlet expected = String::from(" + json_dump(json["expected"]) + ");"
   test += "\n\tassert_eq!(result, expected)"
   test += "\n}"
@@ -74,7 +74,7 @@ for file in spec_dir.glob("*.json"):
   test_dir = Path("../src/html_templating/spec_tests")
   test_file = Path("../src/html_templating/spec_tests/" + file.name[:-5].replace("~", "_").replace("-", "_") + ".rs")
   write_stream = test_file.open("w")
-  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{create_oneoff_engine, oneoff_render, CtxValue};\n\t"
+  file_txt = "#[cfg(test)]\nmod tests {\n\tuse crate::html_templating::{TemplateEngine, oneoff_render, CtxValue};\n\t"
   for test_json in jsond["tests"]:
     test_str = make_rust_test(test_json)
     file_txt += test_str
