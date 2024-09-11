@@ -1,5 +1,6 @@
 mod spec_tests;
 use std::collections::HashMap;
+mod escape_html;
 // A mustache compliant templating engine 🚀
 
 struct TemplateEngine;
@@ -44,11 +45,13 @@ pub fn mustachify(template_string: String, context: HashMap<&str, CtxValue>) -> 
                 let char_len_until_end_of_closing_brackets =
                     rest_of_line[..closing_stache_byte_idx].chars().count() + skip;
 
-                let content_in_stache: String = rest_of_line[..closing_stache_byte_idx]
+                let mut content_in_stache: String = rest_of_line[..closing_stache_byte_idx]
                     .chars()
                     .skip(skip - 1)
                     .collect();
-
+                if is_html_escaped {
+                    content_in_stache = escape_html::escape_html(content_in_stache);
+                }
                 // here's where we start thinking about all the different stache statements
                 if content_in_stache.starts_with("#") {
                     // Section!
