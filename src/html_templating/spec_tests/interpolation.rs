@@ -20,7 +20,7 @@ pub fn basic_interpolation () {
 	let template = "Hello, {{subject}}!\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".subject",CtxValue::String("world".to_string()));
+	ctx.insert("subject",CtxValue::String("world".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("Hello, world!\n");
 	assert_eq!(result, expected)
@@ -32,8 +32,8 @@ pub fn no_reinterpolation () {
 	let template = "{{template}}: {{planet}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".template",CtxValue::String("{{planet}}".to_string()));
-	ctx.insert(".planet",CtxValue::String("Earth".to_string()));
+	ctx.insert("template",CtxValue::String("{{planet}}".to_string()));
+	ctx.insert("planet",CtxValue::String("Earth".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("{{planet}}: Earth");
 	assert_eq!(result, expected)
@@ -45,7 +45,7 @@ pub fn html_escaping () {
 	let template = "These characters should be HTML escaped: {{forbidden}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".forbidden",CtxValue::String("& \" < >".to_string()));
+	ctx.insert("forbidden",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should be HTML escaped: &amp; &quot; &lt; &gt;\n");
 	assert_eq!(result, expected)
@@ -57,7 +57,7 @@ pub fn triple_mustache () {
 	let template = "These characters should not be HTML escaped: {{{forbidden}}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".forbidden",CtxValue::String("& \" < >".to_string()));
+	ctx.insert("forbidden",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should not be HTML escaped: & \" < >\n");
 	assert_eq!(result, expected)
@@ -69,7 +69,7 @@ pub fn ampersand () {
 	let template = "These characters should not be HTML escaped: {{&forbidden}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".forbidden",CtxValue::String("& \" < >".to_string()));
+	ctx.insert("forbidden",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should not be HTML escaped: & \" < >\n");
 	assert_eq!(result, expected)
@@ -81,7 +81,7 @@ pub fn basic_integer_interpolation () {
 	let template = "\"{{mph}} miles an hour!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".mph",CtxValue::Number(85));
+	ctx.insert("mph",CtxValue::Number(85));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"85 miles an hour!\"");
 	assert_eq!(result, expected)
@@ -93,7 +93,7 @@ pub fn triple_mustache_integer_interpolation () {
 	let template = "\"{{{mph}}} miles an hour!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".mph",CtxValue::Number(85));
+	ctx.insert("mph",CtxValue::Number(85));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"85 miles an hour!\"");
 	assert_eq!(result, expected)
@@ -105,7 +105,7 @@ pub fn ampersand_integer_interpolation () {
 	let template = "\"{{&mph}} miles an hour!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".mph",CtxValue::Number(85));
+	ctx.insert("mph",CtxValue::Number(85));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"85 miles an hour!\"");
 	assert_eq!(result, expected)
@@ -117,7 +117,7 @@ pub fn basic_decimal_interpolation () {
 	let template = "\"{{power}} jiggawatts!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".power",CtxValue::String(1.21.to_string()));
+	ctx.insert("power",CtxValue::String(1.21.to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"1.21 jiggawatts!\"");
 	assert_eq!(result, expected)
@@ -129,7 +129,7 @@ pub fn triple_mustache_decimal_interpolation () {
 	let template = "\"{{{power}}} jiggawatts!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".power",CtxValue::String(1.21.to_string()));
+	ctx.insert("power",CtxValue::String(1.21.to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"1.21 jiggawatts!\"");
 	assert_eq!(result, expected)
@@ -141,7 +141,7 @@ pub fn ampersand_decimal_interpolation () {
 	let template = "\"{{&power}} jiggawatts!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".power",CtxValue::String(1.21.to_string()));
+	ctx.insert("power",CtxValue::String(1.21.to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"1.21 jiggawatts!\"");
 	assert_eq!(result, expected)
@@ -153,7 +153,7 @@ pub fn basic_null_interpolation () {
 	let template = "I ({{cannot}}) be seen!".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".cannot",CtxValue::Boolean(false));
+	ctx.insert("cannot",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("I () be seen!");
 	assert_eq!(result, expected)
@@ -165,7 +165,7 @@ pub fn triple_mustache_null_interpolation () {
 	let template = "I ({{{cannot}}}) be seen!".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".cannot",CtxValue::Boolean(false));
+	ctx.insert("cannot",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("I () be seen!");
 	assert_eq!(result, expected)
@@ -177,7 +177,7 @@ pub fn ampersand_null_interpolation () {
 	let template = "I ({{&cannot}}) be seen!".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".cannot",CtxValue::Boolean(false));
+	ctx.insert("cannot",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("I () be seen!");
 	assert_eq!(result, expected)
@@ -310,7 +310,7 @@ pub fn dotted_names_are_never_single_keys () {
 	let template = "{{a.b}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".a.b",CtxValue::String("c".to_string()));
+	ctx.insert("a.b",CtxValue::String("c".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("");
 	assert_eq!(result, expected)
@@ -322,7 +322,7 @@ pub fn dotted_names__no_masking () {
 	let template = "{{a.b}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".a.b",CtxValue::String("c".to_string()));
+	ctx.insert("a.b",CtxValue::String("c".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("d");
 	assert_eq!(result, expected)
@@ -389,7 +389,7 @@ pub fn interpolation__surrounding_whitespace () {
 	let template = "| {{string}} |".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| --- |");
 	assert_eq!(result, expected)
@@ -401,7 +401,7 @@ pub fn triple_mustache__surrounding_whitespace () {
 	let template = "| {{{string}}} |".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| --- |");
 	assert_eq!(result, expected)
@@ -413,7 +413,7 @@ pub fn ampersand__surrounding_whitespace () {
 	let template = "| {{&string}} |".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| --- |");
 	assert_eq!(result, expected)
@@ -425,7 +425,7 @@ pub fn interpolation__standalone () {
 	let template = "  {{string}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("  ---\n");
 	assert_eq!(result, expected)
@@ -437,7 +437,7 @@ pub fn triple_mustache__standalone () {
 	let template = "  {{{string}}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("  ---\n");
 	assert_eq!(result, expected)
@@ -449,7 +449,7 @@ pub fn ampersand__standalone () {
 	let template = "  {{&string}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("  ---\n");
 	assert_eq!(result, expected)
@@ -461,7 +461,7 @@ pub fn interpolation_with_padding () {
 	let template = "|{{ string }}|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|---|");
 	assert_eq!(result, expected)
@@ -473,7 +473,7 @@ pub fn triple_mustache_with_padding () {
 	let template = "|{{{ string }}}|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|---|");
 	assert_eq!(result, expected)
@@ -485,7 +485,7 @@ pub fn ampersand_with_padding () {
 	let template = "|{{& string }}|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".string",CtxValue::String("---".to_string()));
+	ctx.insert("string",CtxValue::String("---".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|---|");
 	assert_eq!(result, expected)

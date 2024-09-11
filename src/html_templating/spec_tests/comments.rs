@@ -130,10 +130,10 @@ pub fn variable_name_collision () {
 	let template = "comments never show: >{{! comment }}<".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".! comment",CtxValue::Number(1));
-	ctx.insert(".! comment ",CtxValue::Number(2));
-	ctx.insert(".!comment",CtxValue::Number(3));
-	ctx.insert(".comment",CtxValue::Number(4));
+	ctx.insert("! comment",CtxValue::Number(1));
+	ctx.insert("! comment ",CtxValue::Number(2));
+	ctx.insert("!comment",CtxValue::Number(3));
+	ctx.insert("comment",CtxValue::Number(4));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("comments never show: ><");
 	assert_eq!(result, expected)

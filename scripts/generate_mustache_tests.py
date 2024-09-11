@@ -60,7 +60,10 @@ def parse_json(json,parents,n) -> dict:
         if isinstance(v, dict) or isinstance(v,list):
             parse_json(v,parents+"."+k, n+1)
         else:
-            flattened_dict[parents+"."+k] = v
+            if parents == "":
+               flattened_dict[k] = v
+            else:
+              flattened_dict[parents+"."+k] = v
   return flattened_dict
 
 

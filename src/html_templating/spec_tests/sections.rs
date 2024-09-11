@@ -9,7 +9,7 @@ pub fn truthy () {
 	let template = "\"{{#boolean}}This should be rendered.{{/boolean}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"This should be rendered.\"");
 	assert_eq!(result, expected)
@@ -21,7 +21,7 @@ pub fn falsey () {
 	let template = "\"{{#boolean}}This should not be rendered.{{/boolean}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(false));
+	ctx.insert("boolean",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"\"");
 	assert_eq!(result, expected)
@@ -33,7 +33,7 @@ pub fn null_is_falsey () {
 	let template = "\"{{#null}}This should not be rendered.{{/null}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".null",CtxValue::Boolean(false));
+	ctx.insert("null",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"\"");
 	assert_eq!(result, expected)
@@ -56,8 +56,8 @@ pub fn parent_contexts () {
 	let template = "\"{{#sec}}{{a}}, {{b}}, {{c.d}}{{/sec}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".a",CtxValue::String("foo".to_string()));
-	ctx.insert(".b",CtxValue::String("wrong".to_string()));
+	ctx.insert("a",CtxValue::String("foo".to_string()));
+	ctx.insert("b",CtxValue::String("wrong".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"foo, bar, baz\"");
 	assert_eq!(result, expected)
@@ -71,7 +71,7 @@ pub fn variable_test () {
 	let template = "\"{{#foo}}{{.}} is {{foo}}{{/foo}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".foo",CtxValue::String("bar".to_string()));
+	ctx.insert("foo",CtxValue::String("bar".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"bar is bar\"");
 	assert_eq!(result, expected)
@@ -127,8 +127,8 @@ pub fn doubled () {
 	let template = "{{#bool}}\n* first\n{{/bool}}\n* {{two}}\n{{#bool}}\n* third\n{{/bool}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".bool",CtxValue::Boolean(true));
-	ctx.insert(".two",CtxValue::String("second".to_string()));
+	ctx.insert("bool",CtxValue::Boolean(true));
+	ctx.insert("two",CtxValue::String("second".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("* first\n* second\n* third\n");
 	assert_eq!(result, expected)
@@ -140,7 +140,7 @@ pub fn nested_truthy () {
 	let template = "| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".bool",CtxValue::Boolean(true));
+	ctx.insert("bool",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| A B C D E |");
 	assert_eq!(result, expected)
@@ -152,7 +152,7 @@ pub fn nested_falsey () {
 	let template = "| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".bool",CtxValue::Boolean(false));
+	ctx.insert("bool",CtxValue::Boolean(false));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| A  E |");
 	assert_eq!(result, expected)
@@ -296,7 +296,7 @@ pub fn surrounding_whitespace () {
 	let template = " | {{#boolean}}\t|\t{{/boolean}} | \n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from(" | \t|\t | \n");
 	assert_eq!(result, expected)
@@ -308,7 +308,7 @@ pub fn internal_whitespace () {
 	let template = " | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from(" |  \n  | \n");
 	assert_eq!(result, expected)
@@ -320,7 +320,7 @@ pub fn indented_inline_sections () {
 	let template = " {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from(" YES\n GOOD\n");
 	assert_eq!(result, expected)
@@ -332,7 +332,7 @@ pub fn standalone_lines () {
 	let template = "| This Is\n{{#boolean}}\n|\n{{/boolean}}\n| A Line\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| This Is\n|\n| A Line\n");
 	assert_eq!(result, expected)
@@ -344,7 +344,7 @@ pub fn indented_standalone_lines () {
 	let template = "| This Is\n  {{#boolean}}\n|\n  {{/boolean}}\n| A Line\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("| This Is\n|\n| A Line\n");
 	assert_eq!(result, expected)
@@ -356,7 +356,7 @@ pub fn standalone_line_endings () {
 	let template = "|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|\r\n|");
 	assert_eq!(result, expected)
@@ -368,7 +368,7 @@ pub fn standalone_without_previous_line () {
 	let template = "  {{#boolean}}\n#{{/boolean}}\n/".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("#\n/");
 	assert_eq!(result, expected)
@@ -380,7 +380,7 @@ pub fn standalone_without_newline () {
 	let template = "#{{#boolean}}\n/\n  {{/boolean}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("#\n/\n");
 	assert_eq!(result, expected)
@@ -392,7 +392,7 @@ pub fn padding () {
 	let template = "|{{# boolean }}={{/ boolean }}|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|=|");
 	assert_eq!(result, expected)

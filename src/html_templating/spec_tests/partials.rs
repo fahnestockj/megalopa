@@ -31,7 +31,7 @@ pub fn context () {
 	let template = "\"{{>partial}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".text",CtxValue::String("content".to_string()));
+	ctx.insert("text",CtxValue::String("content".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"*content*\"");
 	assert_eq!(result, expected)
@@ -43,7 +43,7 @@ pub fn recursion () {
 	let template = "{{>node}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".content",CtxValue::String("X".to_string()));
+	ctx.insert("content",CtxValue::String("X".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("X<Y<>>");
 	assert_eq!(result, expected)
@@ -55,8 +55,8 @@ pub fn nested () {
 	let template = "{{>outer}}".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".a",CtxValue::String("hello".to_string()));
-	ctx.insert(".b",CtxValue::String("world".to_string()));
+	ctx.insert("a",CtxValue::String("hello".to_string()));
+	ctx.insert("b",CtxValue::String("world".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("*hello world!*");
 	assert_eq!(result, expected)
@@ -79,7 +79,7 @@ pub fn inline_indentation () {
 	let template = "  {{data}}  {{> partial}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".data",CtxValue::String("|".to_string()));
+	ctx.insert("data",CtxValue::String("|".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("  |  >\n>\n");
 	assert_eq!(result, expected)
@@ -124,7 +124,7 @@ pub fn standalone_indentation () {
 	let template = "\\\n {{>partial}}\n/\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".content",CtxValue::String("<\n->".to_string()));
+	ctx.insert("content",CtxValue::String("<\n->".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\\\n |\n <\n->\n |\n/\n");
 	assert_eq!(result, expected)
@@ -136,7 +136,7 @@ pub fn padding_whitespace () {
 	let template = "|{{> partial }}|".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
-	ctx.insert(".boolean",CtxValue::Boolean(true));
+	ctx.insert("boolean",CtxValue::Boolean(true));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("|[]|");
 	assert_eq!(result, expected)
