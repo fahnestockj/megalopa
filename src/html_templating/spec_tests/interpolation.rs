@@ -334,6 +334,7 @@ pub fn implicit_iterators__basic_interpolation () {
 	let template = "Hello, {{.}}!\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".",CtxValue::String("world".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("Hello, world!\n");
 	assert_eq!(result, expected)
@@ -345,6 +346,7 @@ pub fn implicit_iterators__html_escaping () {
 	let template = "These characters should be HTML escaped: {{.}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should be HTML escaped: &amp; &quot; &lt; &gt;\n");
 	assert_eq!(result, expected)
@@ -356,6 +358,7 @@ pub fn implicit_iterators__triple_mustache () {
 	let template = "These characters should not be HTML escaped: {{{.}}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should not be HTML escaped: & \" < >\n");
 	assert_eq!(result, expected)
@@ -367,6 +370,7 @@ pub fn implicit_iterators__ampersand () {
 	let template = "These characters should not be HTML escaped: {{&.}}\n".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".",CtxValue::String("& \" < >".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("These characters should not be HTML escaped: & \" < >\n");
 	assert_eq!(result, expected)
@@ -378,6 +382,7 @@ pub fn implicit_iterators__basic_integer_interpolation () {
 	let template = "\"{{.}} miles an hour!\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".",CtxValue::Number(85));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"85 miles an hour!\"");
 	assert_eq!(result, expected)

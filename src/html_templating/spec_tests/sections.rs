@@ -252,6 +252,8 @@ pub fn implicit_iterator__rootlevel () {
 	let template = "\"{{#.}}({{value}}){{/.}}\"".to_string();
 	let engine = TemplateEngine{};
 	let mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();
+	ctx.insert(".0.value",CtxValue::String("a".to_string()));
+	ctx.insert(".1.value",CtxValue::String("b".to_string()));
 	let result = engine.oneoff_render(template, ctx);
 	let expected = String::from("\"(a)(b)\"");
 	assert_eq!(result, expected)

@@ -13,10 +13,7 @@ def make_rust_test(json) -> str:
   test += "\n\tlet engine = TemplateEngine{};"
   test += "\n\tlet mut ctx: std::collections::HashMap<&str, CtxValue> = std::collections::HashMap::new();"
   # flatten json keys into one dict then insert into hashmap
-  flat_dict = {}
-
-  if isinstance(json["data"],dict):
-    flat_dict = parse_json(json["data"],"",0)
+  flat_dict = flatten_json(json["data"],"",0)
   for key in flat_dict:
     test += "\n\tctx.insert(" + json_dump(key) + "," + wrap_ctx_value(json_dump(flat_dict[key])) + ");"
   test += "\n\tlet result = engine.oneoff_render(template, ctx);"
@@ -44,12 +41,14 @@ def wrap_ctx_value(val: str):
 
 
 # flattening nested json keys by joining with a .
-def parse_json(json,parents,n) -> dict:
+def flatten_json(json,parents,n) -> dict:
+  if not (isinstance(json, list) or isinstance(json, dict)):
+    return { ".": json }
   flattened_dict = {}
   if isinstance(json, list):
      for idx, val in enumerate(json):
         if isinstance(val, dict) or isinstance(val,list):
-          list_dict = parse_json(val, parents+"."+str(idx), n+1)
+          list_dict = flatten_json(val, parents+"."+str(idx), n+1)
           flattened_dict.update(list_dict)
           # print(flattened_dict)
         else:
@@ -58,7 +57,7 @@ def parse_json(json,parents,n) -> dict:
   else:
     for k, v in json.items():
         if isinstance(v, dict) or isinstance(v,list):
-            parse_json(v,parents+"."+k, n+1)
+            flatten_json(v,parents+"."+k, n+1)
         else:
             if parents == "":
                flattened_dict[k] = v
