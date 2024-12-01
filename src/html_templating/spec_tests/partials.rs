@@ -2,6 +2,20 @@
 mod tests {
 	use crate::html_templating::{TemplateEngine, OneoffRender, CtxValue};
 	
+// Partial tags are used to expand an external template into the current
+// template.
+// 
+// The tag's content MUST be a non-whitespace character sequence NOT containing
+// the current closing delimiter.
+// 
+// This tag's content names the partial to inject.  Set Delimiter tags MUST NOT
+// affect the parsing of a partial.  The partial MUST be rendered against the
+// context stack local to the tag.  If the named partial cannot be found, the
+// empty string SHOULD be used instead, as in interpolations.
+// 
+// Partial tags SHOULD be treated as standalone when appropriate.  If this tag
+// is used standalone, any whitespace preceding the tag should treated as
+// indentation, and prepended to each line of the partial before rendering.
 
 /// The greater-than operator should expand to the named partial.
 #[test]

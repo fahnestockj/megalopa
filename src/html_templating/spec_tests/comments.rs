@@ -2,6 +2,13 @@
 mod tests {
 	use crate::html_templating::{TemplateEngine, OneoffRender, CtxValue};
 	
+// Comment tags represent content that should never appear in the resulting
+// output.
+// 
+// The tag's content may contain any substring (including newlines) EXCEPT the
+// closing delimiter.
+// 
+// Comment tags SHOULD be treated as standalone when appropriate.
 
 /// Comment blocks should be removed from the template.
 #[test]

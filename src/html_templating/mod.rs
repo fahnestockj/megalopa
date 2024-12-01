@@ -1,6 +1,7 @@
 mod spec_tests;
 use std::collections::HashMap;
 mod escape_html;
+mod json_to_ctx;
 // A mustache compliant templating engine 🚀
 
 struct TemplateEngine;
@@ -15,11 +16,13 @@ impl OneoffRender for TemplateEngine {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CtxValue {
     String(String),
     Boolean(bool),
     Number(i8),
+    HashMap(Box<HashMap<String, CtxValue>>),
+    List(Box<Vec<CtxValue>>),
 }
 
 pub fn mustachify(template_string: String, context: HashMap<&str, CtxValue>) -> String {
@@ -33,7 +36,6 @@ pub fn mustachify(template_string: String, context: HashMap<&str, CtxValue>) -> 
             let is_triple_stache = sub_iter.clone().next().is_some_and(|char| char == '{');
             let is_html_escaped =
                 !(is_triple_stache || sub_iter.clone().next().is_some_and(|char| char == '&'));
-
             // closing tags?
             let closing_pattern = if is_triple_stache { "}}}" } else { "}}" };
             // rest_of_line after the first {
@@ -44,13 +46,19 @@ pub fn mustachify(template_string: String, context: HashMap<&str, CtxValue>) -> 
                 // rest_of_line includes a starting { or {{ so - (skip-1)
                 let char_len_until_end_of_closing_brackets =
                     rest_of_line[..closing_stache_byte_idx].chars().count() + skip;
-
                 let mut content_in_stache: String = rest_of_line[..closing_stache_byte_idx]
                     .chars()
                     .skip(skip - 1)
                     .collect();
-                if is_html_escaped {
-                    content_in_stache = escape_html::escape_html(content_in_stache);
+                if content_in_stache
+                    .chars()
+                    .next()
+                    .is_some_and(|char| char == '&')
+                {
+                    content_in_stache = content_in_stache
+                        .strip_prefix("&")
+                        .expect("should be there")
+                        .to_string();
                 }
                 // here's where we start thinking about all the different stache statements
                 if content_in_stache.starts_with("#") {
@@ -71,11 +79,15 @@ pub fn mustachify(template_string: String, context: HashMap<&str, CtxValue>) -> 
                         None => CtxValue::String("".to_string()),
                     };
                     // makes sense for num and string but boolean?? this is smelly
-                    let string_value = match variable_value {
-                        CtxValue::Boolean(b) => b.to_string(),
+                    let mut string_value = match variable_value {
+                        CtxValue::Boolean(_) => "".to_string(),
                         CtxValue::Number(n) => n.to_string(),
                         CtxValue::String(s) => s,
+                        _ => { todo!()}
                     };
+                    if is_html_escaped {
+                        string_value = escape_html::escape_html(string_value);
+                    }
                     result.push_str(&string_value);
                     char_iter.nth(char_len_until_end_of_closing_brackets - 1);
                 }
